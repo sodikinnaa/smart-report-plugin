@@ -1,5 +1,4 @@
-/**
- * MCP Activation Hook
- */
-export declare function register(api: any): void;
-export declare const activate: typeof register;
+declare const plugin: any;
+export default plugin;
+export declare const register: any;
+export declare const activate: any;
