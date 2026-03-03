@@ -209,6 +209,6 @@ export function register(api: any) {
     });
 }
 
-// Ensure both default and named exports
-export default register;
+// We remove default export and stick to NAMED exports only
+// to see if it helps the loader distinguish the module structure.
 export const activate = register;
