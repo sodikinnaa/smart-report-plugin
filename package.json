@@ -1,0 +1,24 @@
+{
+  "name": "smart-report-plugin",
+  "version": "1.0.0",
+  "description": "OpenClaw plugin for Smart Report system integration",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "openclaw-plugin",
+    "smart-report"
+  ],
+  "author": "Sodikin",
+  "license": "MIT",
+  "devDependencies": {
+    "@openclaw/core": "latest",
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "axios": "^1.6.0"
+  }
+}

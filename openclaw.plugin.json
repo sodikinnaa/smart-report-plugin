@@ -1,0 +1,14 @@
+{
+  "id": "smart-report-plugin",
+  "name": "Smart Report Integration",
+  "version": "1.0.0",
+  "description": "Integration plugin for Smart Report and AI Analytics",
+  "entry": "dist/index.js",
+  "skills": ["skills/smart-report/SKILL.md"],
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "apiToken": { "type": "string" }
+    }
+  }
+}
