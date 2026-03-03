@@ -48,7 +48,10 @@ async function callMcp(api, method, params = {}) {
     }
     return response.data.result;
 }
-export default function register(api) {
+/**
+ * MCP Activation Hook
+ */
+export function register(api) {
     // 1. CLI Commands
     api.registerCli(({ program }) => {
         program
@@ -125,3 +128,6 @@ export default function register(api) {
         }
     });
 }
+// Ensure both default and named exports
+export default register;
+export const activate = register;
