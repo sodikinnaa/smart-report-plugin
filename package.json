@@ -1,7 +1,7 @@
 {
   "name": "@sodikinnaa/smart-report-plugin",
-  "version": "2.1.0",
-  "description": "OpenClaw plugin for Smart Report with Professional Dashboard Formatting",
+  "version": "2.1.1",
+  "description": "OpenClaw plugin for Smart Report system integration with Daily Dashboard",
   "main": "dist/index.js",
   "module": "dist/index.js",
   "type": "module",

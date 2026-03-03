@@ -101,6 +101,16 @@ export function register(api) {
         }
     });
     api.registerResource({
+        uri: 'smartreport://guides',
+        name: 'Guides List',
+        description: 'List of all available dynamic guides',
+        mimeType: 'application/json',
+        read: async () => {
+            const data = await callMcp(api, 'guides/list', {});
+            return { content: JSON.stringify(data, null, 2) };
+        }
+    });
+    api.registerResource({
         uri: 'smartreport://debt-aging',
         name: 'Debt Aging Analysis',
         description: 'Analysis of pending tasks and overdue reports',
@@ -127,6 +137,32 @@ export function register(api) {
         execute: async (args) => {
             try {
                 const data = await callMcp(api, 'smartreport/dashboard', args);
+                return { text: JSON.stringify(data, null, 2) };
+            }
+            catch (err) {
+                return { error: err.message };
+            }
+        }
+    });
+    api.registerTool({
+        name: 'get_guides_list',
+        description: 'Retrieve list of all available dynamic guides.',
+        execute: async () => {
+            try {
+                const data = await callMcp(api, 'guides/list', {});
+                return { text: JSON.stringify(data, null, 2) };
+            }
+            catch (err) {
+                return { error: err.message };
+            }
+        }
+    });
+    api.registerTool({
+        name: 'get_guide_content',
+        description: 'Retrieve full content of a specific guide by ID.',
+        execute: async (args) => {
+            try {
+                const data = await callMcp(api, 'guides/get', args);
                 return { text: JSON.stringify(data, null, 2) };
             }
             catch (err) {
