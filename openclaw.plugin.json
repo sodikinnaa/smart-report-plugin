@@ -1,8 +1,8 @@
 {
   "id": "smart-report-plugin",
   "name": "Smart Report Integration",
-  "version": "1.0.8",
-  "description": "Integration plugin for Smart Report and AI Analytics with Daily Dashboard",
+  "version": "2.0.0",
+  "description": "Integration plugin for Smart Report with Professional Dashboard Formatting",
   "entry": "dist/index.js",
   "skills": ["skills/smart-report/SKILL.md"],
   "configSchema": {
