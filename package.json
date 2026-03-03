@@ -1,18 +1,20 @@
 {
   "name": "@sodikinnaa/smart-report-plugin",
-  "version": "1.0.7",
-  "description": "OpenClaw plugin for Smart Report system integration",
+  "version": "1.0.8",
+  "description": "OpenClaw plugin for Smart Report system integration with Daily Dashboard",
   "main": "dist/index.js",
   "module": "dist/index.js",
   "type": "module",
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node test/simple.test.js",
+    "publish": "npm publish --access public"
   },
   "keywords": [
     "openclaw-plugin",
-    "smart-report"
+    "smart-report",
+    "dashboard"
   ],
   "author": "Sodikin",
   "license": "MIT",

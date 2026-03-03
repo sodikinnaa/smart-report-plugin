@@ -120,7 +120,31 @@ export function register(api: any) {
         }
     });
 
+    api.registerResource({
+        uri: 'smartreport://dashboard',
+        name: 'Daily Dashboard',
+        description: 'Real-time KPI dashboard (stats, highlights, alerts)',
+        mimeType: 'application/json',
+        read: async (params: any) => {
+            const data = await callMcp(api, 'smartreport/dashboard', params || {});
+            return { content: JSON.stringify(data, null, 2) };
+        }
+    });
+
     // 3. Agent Tools
+    api.registerTool({
+        name: 'get_daily_dashboard',
+        description: 'Retrieve real-time KPI dashboard (stats, highlights, alerts).',
+        execute: async (args: any) => {
+            try {
+                const data = await callMcp(api, 'smartreport/dashboard', args);
+                return { text: JSON.stringify(data, null, 2) };
+            } catch (err: any) {
+                return { error: err.message };
+            }
+        }
+    });
+
     api.registerTool({
         name: 'get_list_reports',
         description: 'Retrieve reports with filters (date, employee, division).',
