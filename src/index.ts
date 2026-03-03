@@ -90,10 +90,21 @@ export function register(api: any) {
     api.registerResource({
         uri: 'smartreport://employees',
         name: 'Employee List',
-        description: 'Complete list of active employees',
+        description: 'Complete list of active employees with division names',
         mimeType: 'application/json',
         read: async () => {
             const data = await callMcp(api, 'employees/list', {});
+            return { content: JSON.stringify(data, null, 2) };
+        }
+    });
+
+    api.registerResource({
+        uri: 'smartreport://divisions',
+        name: 'Division List',
+        description: 'List of all divisions in the company',
+        mimeType: 'application/json',
+        read: async () => {
+            const data = await callMcp(api, 'divisions/list', {});
             return { content: JSON.stringify(data, null, 2) };
         }
     });
