@@ -1,11 +1,13 @@
-import type { PluginApi } from '@openclaw/core';
+/**
+ * Smart Report MCP Plugin for OpenClaw
+ */
 import axios from 'axios';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 
 const PLUGIN_ID = 'smart-report-plugin';
-const API_BASE = 'https://karyawan.gemaritematik.id/api/mcp';
+const API_BASE = 'https://smartreport.siapdigital.my.id/api/mcp';
 
 function saveConfig(token: string) {
     const configPath = path.join(os.homedir(), '.openclaw', 'openclaw.json');
@@ -52,9 +54,9 @@ async function callMcp(api: any, method: string, params: any = {}) {
     return response.data.result;
 }
 
-export default function register(api: PluginApi) {
+export default function register(api: any) {
     // 1. CLI Commands
-    api.registerCli(({ program }) => {
+    api.registerCli(({ program }: any) => {
         program
             .command('smart-auth <token>')
             .description('Set API Token for Smart Report integration')
@@ -108,7 +110,7 @@ export default function register(api: PluginApi) {
     api.registerTool({
         name: 'get_list_reports',
         description: 'Retrieve reports with filters (date, employee, division).',
-        execute: async (args) => {
+        execute: async (args: any) => {
             try {
                 const data = await callMcp(api, 'reports/list', args);
                 return { text: JSON.stringify(data, null, 2) };
@@ -121,7 +123,7 @@ export default function register(api: PluginApi) {
     api.registerTool({
         name: 'get_debt_analysis',
         description: 'Analyze pending tasks and employee performance debt.',
-        execute: async (args) => {
+        execute: async (args: any) => {
             try {
                 const data = await callMcp(api, 'analyze_performance', args);
                 return { text: JSON.stringify(data, null, 2) };
