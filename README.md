@@ -26,3 +26,17 @@ Distributed under the MIT License. See `LICENSE` for more information.
 
 ---
 *Powered by Sultan Engine*
+
+## 🗑️ Cara Uninstall Plugin
+
+Jika Anda ingin menghapus plugin ini dari OpenClaw Anda, jalankan perintah berikut di terminal:
+
+```bash
+# Hapus instalasi plugin
+openclaw plugins uninstall @sodikinnaa/smart-report-plugin
+
+# (Opsional) Hapus konfigurasi token jika Anda ingin membersihkannya
+openclaw smart-auth --remove
+```
+
+> **Catatan:** Jika Anda juga ingin menghapus aplikasi OpenClaw dari sistem Anda, silakan baca panduan lengkapnya di sini: [Panduan Uninstall OpenClaw](docs/UNINSTALL_OPENCLAW.md).
