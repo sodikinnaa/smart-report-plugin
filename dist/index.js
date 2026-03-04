@@ -1,7 +1,13 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.activate = exports.register = void 0;
 /**
  * Smart Report MCP Plugin for OpenClaw
  */
-import axios from 'axios';
+const axios_1 = __importDefault(require("axios"));
 const PLUGIN_ID = 'smart-report-plugin';
 const API_BASE = 'https://smartreport.siapdigital.my.id/api/mcp';
 async function callMcp(api, method, params = {}) {
@@ -10,7 +16,7 @@ async function callMcp(api, method, params = {}) {
     if (!token) {
         throw new Error('API Token not found. Please run "openclaw smart-auth <token>" first.');
     }
-    const response = await axios.post(API_BASE, {
+    const response = await axios_1.default.post(API_BASE, {
         jsonrpc: '2.0',
         method: method,
         params: params,
@@ -161,6 +167,6 @@ const plugin = {
         });
     }
 };
-export default plugin;
-export const register = plugin.register;
-export const activate = plugin.register;
+exports.default = plugin;
+exports.register = plugin.register;
+exports.activate = plugin.register;
