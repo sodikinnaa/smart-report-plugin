@@ -1,15 +1,15 @@
 {
   "compilerOptions": {
-    "target": "ESNext",
-    "module": "NodeNext",
-    "lib": ["ESNext"],
+    "target": "ES2022",
+    "module": "CommonJS",
+    "lib": ["ES2022", "DOM"],
     "declaration": true,
     "outDir": "./dist",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "moduleResolution": "NodeNext"
+    "moduleResolution": "node"
   },
   "include": ["src/**/*"]
 }

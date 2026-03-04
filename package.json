@@ -1,14 +1,12 @@
 {
   "name": "@sodikinnaa/smart-report-plugin",
-  "version": "2.1.4",
+  "version": "2026.3.42",
   "description": "OpenClaw plugin for Smart Report system integration with Daily Dashboard",
-  "main": "dist/index.js",
-  "module": "dist/index.js",
-  "type": "module",
-  "types": "dist/index.d.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "scripts": {
     "build": "tsc",
-    "test": "node test/simple.test.js",
+    "test": "node scripts/test-loader.js",
     "publish": "npm publish --access public"
   },
   "keywords": [
@@ -24,6 +22,7 @@
     ]
   },
   "devDependencies": {
+    "@types/node": "^25.3.3",
     "typescript": "^5.0.0"
   },
   "dependencies": {
