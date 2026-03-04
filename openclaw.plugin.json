@@ -1,14 +1,18 @@
 {
   "id": "smart-report-plugin",
   "name": "Smart Report Integration",
-  "version": "2026.3.42",
+  "version": "2026.3.43",
   "description": "Integration plugin for Smart Report and AI Analytics with Daily Dashboard and Dynamic Guides",
   "entrypoint": "./dist/index.js",
-  "skills": ["skills/smart-report/SKILL.md"],
+  "skills": [
+    "skills/smart-report/SKILL.md"
+  ],
   "configSchema": {
     "type": "object",
     "properties": {
-      "apiToken": { "type": "string" }
+      "apiToken": {
+        "type": "string"
+      }
     }
   }
 }
