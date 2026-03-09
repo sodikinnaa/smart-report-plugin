@@ -9,7 +9,22 @@ openclaw plugins install @sodikinnaa/smart-report-plugin
 
 # 2. Aktivasi Token
 openclaw smart-auth YOUR_SECRET_TOKEN
+
+# 3. Cek status semua fungsi MCP
+openclaw smart-status
 ```
+
+## ✅ Command Tambahan
+- `openclaw smart-auth <token>` → menyimpan dan validasi token Smart Report.
+- `openclaw smart-status` → health-check semua fungsi MCP utama:
+  - `company/info`
+  - `smartreport/dashboard`
+  - `employees/list`
+  - `reports/list`
+  - `divisions/list`
+  - `guides/list`
+  - `analyze_performance`
+
 
 ## 📖 Dokumentasi Lengkap
 Kami telah menyediakan panduan langkah-demi-langkah untuk pengguna teknis maupun non-teknis:

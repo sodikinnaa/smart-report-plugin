@@ -4,7 +4,7 @@
 import axios from 'axios';
 
 const PLUGIN_ID = 'smart-report-plugin';
-const API_BASE = 'https://smartreport.siapdigital.my.id/api/mcp';
+const API_BASE = 'https://member.smartreport.my.id/api/mcp';
 
 async function callMcp(api: any, method: string, params: any = {}) {
     const config: any = api.config;
@@ -37,7 +37,7 @@ async function callMcp(api: any, method: string, params: any = {}) {
 const plugin: any = {
     id: PLUGIN_ID,
     name: "Smart Report Integration",
-    version: "2.1.4",
+    version: "2100.11.1-test.0",
     
     register(api: any) {
         // 1. CLI Commands
@@ -46,10 +46,68 @@ const plugin: any = {
                 .command('smart-auth <token>')
                 .description('Set API Token for Smart Report integration')
                 .action(async (token: string) => {
-                    await api.saveConfig({ apiToken: token });
-                    console.log('✅ Smart Report API Token saved successfully.');
+                    process.stdout.write('🔍 Verifying token and fetching company info...');
+                    try {
+                        // Temporarily set token to verify
+                        api.config.apiToken = token;
+                        const companyInfo = await callMcp(api, 'company/info', {});
+                        
+                        await api.saveConfig({ 
+                            apiToken: token,
+                            companyName: companyInfo.name,
+                            companyDomain: companyInfo.domain
+                        });
+                        
+                        console.log(`\r✅ Authenticated for: ${companyInfo.name} (${companyInfo.domain})`);
+                        console.log('   Smart Report API Token saved successfully.');
+                    } catch (err: any) {
+                        console.error(`\r❌ Authentication failed: ${err.message}`);
+                        process.exit(1);
+                    }
                 });
-        }, { commands: ['smart-auth'] });
+
+            program
+                .command('smart-status')
+                .description('Check Smart Report MCP connectivity and core functions status')
+                .action(async () => {
+                    const checks: Array<{ name: string; status: string; detail: string }> = [];
+
+                    const runCheck = async (name: string, fn: () => Promise<any>) => {
+                        try {
+                            const result = await fn();
+                            const detail = Array.isArray(result)
+                                ? `OK (items=${result.length})`
+                                : 'OK';
+                            checks.push({ name, status: '✅', detail });
+                        } catch (err: any) {
+                            checks.push({ name, status: '❌', detail: err?.message || 'Unknown error' });
+                        }
+                    };
+
+                    await runCheck('auth/company-info', async () => callMcp(api, 'company/info', {}));
+                    await runCheck('dashboard', async () => callMcp(api, 'smartreport/dashboard', { mode: 'compact' }));
+                    await runCheck('employees/list', async () => callMcp(api, 'employees/list', {}));
+                    await runCheck('reports/list', async () => callMcp(api, 'reports/list', { per_page: 5 }));
+                    await runCheck('divisions/list', async () => callMcp(api, 'divisions/list', {}));
+                    await runCheck('guides/list', async () => callMcp(api, 'guides/list', {}));
+                    await runCheck('analyze_performance', async () => callMcp(api, 'analyze_performance', {}));
+
+                    console.log('\n📊 Smart Report MCP Status');
+                    console.log('----------------------------------------');
+                    for (const c of checks) {
+                        console.log(`${c.status} ${c.name} -> ${c.detail}`);
+                    }
+
+                    const failed = checks.filter(c => c.status === '❌').length;
+                    console.log('----------------------------------------');
+                    if (failed === 0) {
+                        console.log('✅ All MCP function checks passed.');
+                    } else {
+                        console.log(`⚠️ ${failed} check(s) failed.`);
+                        process.exit(1);
+                    }
+                });
+        }, { commands: ['smart-auth', 'smart-status'] });
 
         // 2. Resources
         api.registerResource({
@@ -175,6 +233,6 @@ const plugin: any = {
     }
 };
 
+export const register = (api: any) => plugin.register(api);
+export const activate = (api: any) => plugin.register(api);
 export default plugin;
-export const register = plugin.register;
-export const activate = plugin.register;
