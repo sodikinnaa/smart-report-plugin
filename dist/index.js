@@ -11,7 +11,7 @@ const axios_1 = __importDefault(require("axios"));
 const fs_1 = __importDefault(require("fs"));
 const path_1 = __importDefault(require("path"));
 const PLUGIN_ID = 'smart-report-plugin';
-const API_BASE = 'https://smartreport.siapdigital.my.id/api/mcp';
+const API_BASE = 'https://member.smartreport.my.id/api/mcp';
 function resolveToken(api) {
     return api?.pluginConfig?.apiToken
         || api?.config?.apiToken

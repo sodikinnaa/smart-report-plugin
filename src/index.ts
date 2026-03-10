@@ -6,7 +6,7 @@ import fs from 'fs';
 import path from 'path';
 
 const PLUGIN_ID = 'smart-report-plugin';
-const API_BASE = 'https://smartreport.siapdigital.my.id/api/mcp';
+const API_BASE = 'https://member.smartreport.my.id/api/mcp';
 
 function resolveToken(api: any): string | undefined {
     return api?.pluginConfig?.apiToken
