@@ -132,6 +132,13 @@ NODE
   success "plugins.allow disinkronkan untuk ${PLUGIN_ID}"
 }
 
+TMP_DIR=""
+cleanup() {
+  if [[ -n "${TMP_DIR:-}" && -d "${TMP_DIR:-}" ]]; then
+    rm -rf "${TMP_DIR}" || true
+  fi
+}
+
 main() {
   parse_args "$@"
 
@@ -139,40 +146,41 @@ main() {
   need_cmd node
   need_cmd npm
 
-  local tmp_dir
-  tmp_dir="$(mktemp -d /tmp/smart-report-plugin-install-XXXXXX)"
-  trap 'rm -rf "${tmp_dir}"' EXIT
+  TMP_DIR="$(mktemp -d /tmp/smart-report-plugin-install-XXXXXX)"
+  trap cleanup EXIT
 
   local clone_url
   clone_url="$(with_token_repo_url "$REPO_URL" "$GITHUB_TOKEN")"
 
   info "Cloning repo..."
-  git clone --depth 1 --branch "$BRANCH" "$clone_url" "$tmp_dir/repo" >/dev/null 2>&1 || fatal "Gagal clone repo: $REPO_URL (branch: $BRANCH)"
+  git clone --depth 1 --branch "$BRANCH" "$clone_url" "$TMP_DIR/repo" >/dev/null 2>&1 || fatal "Gagal clone repo: $REPO_URL (branch: $BRANCH)"
   success "Repo cloned (${BRANCH})"
 
   if [[ "$SKIP_BUILD" != "1" ]]; then
     info "Installing npm dependencies..."
-    (cd "$tmp_dir/repo" && npm ci >/dev/null 2>&1) || (cd "$tmp_dir/repo" && npm install >/dev/null 2>&1) || fatal "npm install gagal"
+    (cd "$TMP_DIR/repo" && npm ci >/dev/null 2>&1) || (cd "$TMP_DIR/repo" && npm install >/dev/null 2>&1) || fatal "npm install gagal"
 
     info "Building plugin..."
-    (cd "$tmp_dir/repo" && npm run build >/dev/null 2>&1) || fatal "npm run build gagal"
+    (cd "$TMP_DIR/repo" && npm run build >/dev/null 2>&1) || fatal "npm run build gagal"
     success "Build selesai"
   else
     warn "Build di-skip (--skip-build)"
   fi
 
-  [[ -f "$tmp_dir/repo/openclaw.plugin.json" ]] || fatal "openclaw.plugin.json tidak ditemukan"
-  [[ -f "$tmp_dir/repo/dist/openclaw.cjs" ]] || fatal "dist/openclaw.cjs tidak ditemukan"
+  [[ -f "$TMP_DIR/repo/openclaw.plugin.json" ]] || fatal "openclaw.plugin.json tidak ditemukan"
+  [[ -f "$TMP_DIR/repo/dist/openclaw.cjs" ]] || fatal "dist/openclaw.cjs tidak ditemukan"
 
   info "Verifying register/activate export..."
-  node -e "const m=require('$tmp_dir/repo/dist/openclaw.cjs'); const ok=(typeof m==='function'||typeof m.register==='function'||typeof m.activate==='function'); if(!ok){throw new Error('register/activate export not found')} console.log('OK');" >/dev/null || fatal "Plugin export invalid (register/activate tidak ada)"
+  node -e "const m=require('$TMP_DIR/repo/dist/openclaw.cjs'); const ok=(typeof m==='function'||typeof m.register==='function'||typeof m.activate==='function'); if(!ok){throw new Error('register/activate export not found')} console.log('OK');" >/dev/null || fatal "Plugin export invalid (register/activate tidak ada)"
   success "Export register/activate valid"
 
   mkdir -p "$(dirname "$TARGET_DIR")"
 
   if [[ -d "$TARGET_DIR" ]]; then
-    local backup_dir
-    backup_dir="${TARGET_DIR}.backup.$(date +%Y%m%d-%H%M%S)"
+    local backup_root backup_dir
+    backup_root="${HOME}/.openclaw/extensions-backup/${PLUGIN_ID}"
+    mkdir -p "$backup_root"
+    backup_dir="${backup_root}/$(date +%Y%m%d-%H%M%S)"
     mv "$TARGET_DIR" "$backup_dir"
     warn "Backup plugin lama -> ${backup_dir}"
   fi
@@ -181,10 +189,10 @@ main() {
 
   # Copy only necessary files
   cp -R \
-    "$tmp_dir/repo/openclaw.plugin.json" \
-    "$tmp_dir/repo/dist" \
-    "$tmp_dir/repo/skills" \
-    "$tmp_dir/repo/README.md" \
+    "$TMP_DIR/repo/openclaw.plugin.json" \
+    "$TMP_DIR/repo/dist" \
+    "$TMP_DIR/repo/skills" \
+    "$TMP_DIR/repo/README.md" \
     "$TARGET_DIR/"
 
   success "Plugin installed to: ${TARGET_DIR}"
