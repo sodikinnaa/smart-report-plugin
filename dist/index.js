@@ -62,7 +62,7 @@ async function callMcp(api, method, params = {}) {
 const plugin = {
     id: PLUGIN_ID,
     name: "Smart Report Integration",
-    version: "2100.11.4",
+    version: "2100.11.5",
     register(api) {
         // 1. CLI Commands
         api.registerCli(({ program }) => {
