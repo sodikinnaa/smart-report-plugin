@@ -1,9 +1,9 @@
 {
   "id": "smart-report-plugin",
   "name": "Smart Report Integration",
-  "version": "2026.3.43",
+  "version": "2100.11.4",
   "description": "Integration plugin for Smart Report and AI Analytics with Daily Dashboard and Dynamic Guides",
-  "entrypoint": "./dist/index.js",
+  "entrypoint": "./dist/openclaw.cjs",
   "skills": [
     "skills/smart-report/SKILL.md"
   ],
