@@ -287,6 +287,8 @@ main() {
       mkdir -p "$TARGET_DIR"
       cp -R \
         "$TMP_DIR/repo/openclaw.plugin.json" \
+        "$TMP_DIR/repo/package.json" \
+        "$TMP_DIR/repo/package-lock.json" \
         "$TMP_DIR/repo/index.js" \
         "$TMP_DIR/repo/dist" \
         "$TMP_DIR/repo/src" \
@@ -294,6 +296,7 @@ main() {
         "$TMP_DIR/repo/README.md" \
         "$TARGET_DIR/"
 
+      (cd "$TARGET_DIR" && npm install --omit=dev >/dev/null 2>&1) || warn "npm install dependency plugin gagal"
       success "Plugin installed to: ${TARGET_DIR}"
     fi
   else
@@ -310,12 +313,15 @@ main() {
     mkdir -p "$TARGET_DIR"
     cp -R \
       "$TMP_DIR/repo/openclaw.plugin.json" \
+      "$TMP_DIR/repo/package.json" \
+      "$TMP_DIR/repo/package-lock.json" \
       "$TMP_DIR/repo/index.js" \
       "$TMP_DIR/repo/dist" \
       "$TMP_DIR/repo/skills" \
       "$TMP_DIR/repo/README.md" \
       "$TARGET_DIR/"
 
+    (cd "$TARGET_DIR" && npm install --omit=dev >/dev/null 2>&1) || warn "npm install dependency plugin gagal"
     success "Plugin installed to: ${TARGET_DIR}"
   fi
 
