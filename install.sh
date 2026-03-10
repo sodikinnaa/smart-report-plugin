@@ -109,8 +109,11 @@ sync_openclaw_plugin_config() {
   local plugin_id="$1"
   local found_any="0"
 
-  # Candidate locations across common OpenClaw setups
+  # Candidate locations across common OpenClaw setups (prioritize openclaw.json)
   local candidates=(
+    "${HOME}/.openclaw/openclaw.json"
+    "/root/.openclaw/openclaw.json"
+    "/etc/openclaw/openclaw.json"
     "${HOME}/.openclaw/config.json"
     "${HOME}/.config/openclaw/config.json"
     "/root/.openclaw/config.json"
@@ -118,11 +121,11 @@ sync_openclaw_plugin_config() {
     "/etc/openclaw/config.json"
   )
 
-  # Also discover additional openclaw config.json files (depth-limited, safe)
+  # Also discover additional openclaw*.json files (depth-limited, safe)
   while IFS= read -r f; do
     [[ -n "$f" ]] || continue
     candidates+=("$f")
-  done < <(find /root /etc -maxdepth 6 -type f -name 'config.json' -path '*openclaw*' 2>/dev/null | sort -u)
+  done < <(find /root /etc -maxdepth 6 -type f \( -name 'openclaw.json' -o -name 'config.json' \) -path '*openclaw*' 2>/dev/null | sort -u)
 
   # De-duplicate candidates
   local uniq=()
