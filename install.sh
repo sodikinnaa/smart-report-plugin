@@ -214,13 +214,31 @@ main() {
     info "Installing via OpenClaw plugin manager..."
 
     # Remove stale install record if present (safe if plugin not installed)
-    openclaw plugins uninstall "$PLUGIN_ID" >/dev/null 2>&1 || true
+    if command -v timeout >/dev/null 2>&1; then
+      timeout 20 openclaw plugins uninstall "$PLUGIN_ID" >/dev/null 2>&1 || true
+    else
+      openclaw plugins uninstall "$PLUGIN_ID" >/dev/null 2>&1 || true
+    fi
 
     # Install from local prepared repo path (contains built dist)
-    if openclaw plugins install "$TMP_DIR/repo" >/dev/null 2>&1; then
+    local install_ok="0"
+    if command -v timeout >/dev/null 2>&1; then
+      if timeout 45 openclaw plugins install "$TMP_DIR/repo" >/dev/null 2>&1; then
+        install_ok="1"
+      else
+        warn "openclaw plugins install timeout/gagal (>45s), fallback ke manual copy"
+      fi
+    else
+      if openclaw plugins install "$TMP_DIR/repo" >/dev/null 2>&1; then
+        install_ok="1"
+      else
+        warn "openclaw plugins install gagal, fallback ke manual copy"
+      fi
+    fi
+
+    if [[ "$install_ok" == "1" ]]; then
       success "Plugin installed via openclaw plugins install"
     else
-      warn "openclaw plugins install gagal, fallback ke manual copy"
 
       if [[ -d "$TARGET_DIR" ]]; then
         local backup_root backup_dir
