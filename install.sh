@@ -156,18 +156,19 @@ try {
   cfg.plugins.allow = Array.isArray(cfg.plugins.allow) ? cfg.plugins.allow : [];
   if (!cfg.plugins.allow.includes(pluginId)) cfg.plugins.allow.push(pluginId);
 
-  // 2) remove stale entry (root cause: plugin not found warning)
+  // 2) hard-clean stale records (entries + installs)
   if (cfg.plugins.entries && typeof cfg.plugins.entries === 'object') {
-    const entry = cfg.plugins.entries[pluginId];
-    if (entry && typeof entry === 'object') {
-      // keep runtime config payload if exists, but drop stale path/source keys
-      const cleaned = { ...entry };
-      delete cleaned.path;
-      delete cleaned.source;
-      delete cleaned.main;
-      cfg.plugins.entries[pluginId] = cleaned;
-    }
+    delete cfg.plugins.entries[pluginId];
   }
+  if (cfg.plugins.installs && typeof cfg.plugins.installs === 'object') {
+    delete cfg.plugins.installs[pluginId];
+  }
+
+  // 3) force discovery path for manual fallback installs
+  cfg.plugins.load = cfg.plugins.load || {};
+  cfg.plugins.load.paths = Array.isArray(cfg.plugins.load.paths) ? cfg.plugins.load.paths : [];
+  const manualPath = `${process.env.HOME || '/root'}/.openclaw/extensions/${pluginId}`;
+  if (!cfg.plugins.load.paths.includes(manualPath)) cfg.plugins.load.paths.push(manualPath);
 
   fs.writeFileSync(cfgPath, JSON.stringify(cfg, null, 2));
   console.log('synced plugin config:', cfgPath);
@@ -241,6 +242,9 @@ main() {
     fi
 
     # Install from local prepared repo path (contains built dist)
+    # Remove existing dir first to avoid "plugin already exists" hard-fail.
+    rm -rf "$TARGET_DIR" >/dev/null 2>&1 || true
+
     local install_ok="0"
     local install_log="$TMP_DIR/openclaw-install.log"
     if command -v timeout >/dev/null 2>&1; then
