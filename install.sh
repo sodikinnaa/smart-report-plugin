@@ -209,26 +209,59 @@ main() {
 
   mkdir -p "$(dirname "$TARGET_DIR")"
 
-  if [[ -d "$TARGET_DIR" ]]; then
-    local backup_root backup_dir
-    backup_root="${HOME}/.openclaw/extensions-backup/${PLUGIN_ID}"
-    mkdir -p "$backup_root"
-    backup_dir="${backup_root}/$(date +%Y%m%d-%H%M%S)"
-    mv "$TARGET_DIR" "$backup_dir"
-    warn "Backup plugin lama -> ${backup_dir}"
+  # Preferred path: let OpenClaw register install metadata itself.
+  if command -v openclaw >/dev/null 2>&1; then
+    info "Installing via OpenClaw plugin manager..."
+
+    # Remove stale install record if present (safe if plugin not installed)
+    openclaw plugins uninstall "$PLUGIN_ID" >/dev/null 2>&1 || true
+
+    # Install from local prepared repo path (contains built dist)
+    if openclaw plugins install "$TMP_DIR/repo" >/dev/null 2>&1; then
+      success "Plugin installed via openclaw plugins install"
+    else
+      warn "openclaw plugins install gagal, fallback ke manual copy"
+
+      if [[ -d "$TARGET_DIR" ]]; then
+        local backup_root backup_dir
+        backup_root="${HOME}/.openclaw/extensions-backup/${PLUGIN_ID}"
+        mkdir -p "$backup_root"
+        backup_dir="${backup_root}/$(date +%Y%m%d-%H%M%S)"
+        mv "$TARGET_DIR" "$backup_dir"
+        warn "Backup plugin lama -> ${backup_dir}"
+      fi
+
+      mkdir -p "$TARGET_DIR"
+      cp -R \
+        "$TMP_DIR/repo/openclaw.plugin.json" \
+        "$TMP_DIR/repo/dist" \
+        "$TMP_DIR/repo/skills" \
+        "$TMP_DIR/repo/README.md" \
+        "$TARGET_DIR/"
+
+      success "Plugin installed to: ${TARGET_DIR}"
+    fi
+  else
+    # Fallback for environments without openclaw CLI in PATH.
+    if [[ -d "$TARGET_DIR" ]]; then
+      local backup_root backup_dir
+      backup_root="${HOME}/.openclaw/extensions-backup/${PLUGIN_ID}"
+      mkdir -p "$backup_root"
+      backup_dir="${backup_root}/$(date +%Y%m%d-%H%M%S)"
+      mv "$TARGET_DIR" "$backup_dir"
+      warn "Backup plugin lama -> ${backup_dir}"
+    fi
+
+    mkdir -p "$TARGET_DIR"
+    cp -R \
+      "$TMP_DIR/repo/openclaw.plugin.json" \
+      "$TMP_DIR/repo/dist" \
+      "$TMP_DIR/repo/skills" \
+      "$TMP_DIR/repo/README.md" \
+      "$TARGET_DIR/"
+
+    success "Plugin installed to: ${TARGET_DIR}"
   fi
-
-  mkdir -p "$TARGET_DIR"
-
-  # Copy only necessary files
-  cp -R \
-    "$TMP_DIR/repo/openclaw.plugin.json" \
-    "$TMP_DIR/repo/dist" \
-    "$TMP_DIR/repo/skills" \
-    "$TMP_DIR/repo/README.md" \
-    "$TARGET_DIR/"
-
-  success "Plugin installed to: ${TARGET_DIR}"
 
   cleanup_legacy_backups_in_extensions
 
@@ -250,10 +283,12 @@ main() {
 🎉 Instalasi selesai.
 
 Langkah verifikasi:
-  1) openclaw smart-auth <TOKEN_SMART_REPORT>
-  2) openclaw smart-status
+  1) openclaw plugins list --verbose
+  2) openclaw smart-auth <TOKEN_SMART_REPORT>
+  3) openclaw smart-status
 
 Jika masih error:
+  - Jalankan: openclaw plugins doctor
   - Cek entrypoint: ${TARGET_DIR}/openclaw.plugin.json
   - Cek export:    node -e "const m=require('${TARGET_DIR}/dist/openclaw.cjs'); console.log(typeof m, typeof m.register, typeof m.activate)"
 EOF
