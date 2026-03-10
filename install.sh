@@ -222,10 +222,11 @@ main() {
   fi
 
   [[ -f "$TMP_DIR/repo/openclaw.plugin.json" ]] || fatal "openclaw.plugin.json tidak ditemukan"
+  [[ -f "$TMP_DIR/repo/index.js" ]] || fatal "index.js tidak ditemukan"
   [[ -f "$TMP_DIR/repo/dist/index.js" ]] || fatal "dist/index.js tidak ditemukan"
 
   info "Verifying register/activate export..."
-  node -e "const m=require('$TMP_DIR/repo/dist/index.js'); const ok=(typeof m==='function'||typeof m.register==='function'||typeof m.activate==='function'); if(!ok){throw new Error('register/activate export not found')} console.log('OK');" >/dev/null || fatal "Plugin export invalid (register/activate tidak ada)"
+  node -e "const m=require('$TMP_DIR/repo/index.js'); const ok=(typeof m==='function'||typeof m.register==='function'||typeof m.activate==='function'); if(!ok){throw new Error('register/activate export not found')} console.log('OK');" >/dev/null || fatal "Plugin export invalid (register/activate tidak ada)"
   success "Export register/activate valid"
 
   mkdir -p "$(dirname "$TARGET_DIR")"
@@ -286,6 +287,7 @@ main() {
       mkdir -p "$TARGET_DIR"
       cp -R \
         "$TMP_DIR/repo/openclaw.plugin.json" \
+        "$TMP_DIR/repo/index.js" \
         "$TMP_DIR/repo/dist" \
         "$TMP_DIR/repo/src" \
         "$TMP_DIR/repo/skills" \
@@ -308,6 +310,7 @@ main() {
     mkdir -p "$TARGET_DIR"
     cp -R \
       "$TMP_DIR/repo/openclaw.plugin.json" \
+      "$TMP_DIR/repo/index.js" \
       "$TMP_DIR/repo/dist" \
       "$TMP_DIR/repo/skills" \
       "$TMP_DIR/repo/README.md" \

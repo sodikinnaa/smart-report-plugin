@@ -3,7 +3,7 @@
   "name": "Smart Report Integration",
   "version": "2100.11.4",
   "description": "Integration plugin for Smart Report and AI Analytics with Daily Dashboard and Dynamic Guides",
-  "entrypoint": "./dist/index.js",
+  "entrypoint": "./index.js",
   "skills": [
     "skills/smart-report/SKILL.md"
   ],
