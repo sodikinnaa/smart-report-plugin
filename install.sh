@@ -115,9 +115,26 @@ sync_openclaw_plugin_config() {
     "${HOME}/.config/openclaw/config.json"
     "/root/.openclaw/config.json"
     "/root/.config/openclaw/config.json"
+    "/etc/openclaw/config.json"
   )
 
-  for cfg in "${candidates[@]}"; do
+  # Also discover additional openclaw config.json files (depth-limited, safe)
+  while IFS= read -r f; do
+    [[ -n "$f" ]] || continue
+    candidates+=("$f")
+  done < <(find /root /etc -maxdepth 6 -type f -name 'config.json' -path '*openclaw*' 2>/dev/null | sort -u)
+
+  # De-duplicate candidates
+  local uniq=()
+  local c
+  for c in "${candidates[@]}"; do
+    [[ -n "$c" ]] || continue
+    if [[ ! " ${uniq[*]} " =~ " ${c} " ]]; then
+      uniq+=("$c")
+    fi
+  done
+
+  for cfg in "${uniq[@]}"; do
     [[ -f "$cfg" ]] || continue
     found_any="1"
 
@@ -161,7 +178,7 @@ NODE
   if [[ "$found_any" == "1" ]]; then
     success "Konfigurasi plugin disinkronkan (allowlist + stale cleanup)"
   else
-    warn "Tidak menemukan config OpenClaw umum; skip sync config otomatis"
+    warn "Tidak menemukan config OpenClaw; skip sync config otomatis"
   fi
 }
 
@@ -222,17 +239,20 @@ main() {
 
     # Install from local prepared repo path (contains built dist)
     local install_ok="0"
+    local install_log="$TMP_DIR/openclaw-install.log"
     if command -v timeout >/dev/null 2>&1; then
-      if timeout 45 openclaw plugins install "$TMP_DIR/repo" >/dev/null 2>&1; then
+      if timeout 45 openclaw plugins install "$TMP_DIR/repo" >"$install_log" 2>&1; then
         install_ok="1"
       else
         warn "openclaw plugins install timeout/gagal (>45s), fallback ke manual copy"
+        sed -n '1,80p' "$install_log" || true
       fi
     else
-      if openclaw plugins install "$TMP_DIR/repo" >/dev/null 2>&1; then
+      if openclaw plugins install "$TMP_DIR/repo" >"$install_log" 2>&1; then
         install_ok="1"
       else
         warn "openclaw plugins install gagal, fallback ke manual copy"
+        sed -n '1,80p' "$install_log" || true
       fi
     fi
 
