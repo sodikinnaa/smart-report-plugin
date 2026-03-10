@@ -95,41 +95,74 @@ with_token_repo_url() {
   printf '%s\n' "$url"
 }
 
-update_plugins_allow_if_possible() {
-  local config_file
-  config_file="${HOME}/.openclaw/config.json"
-
-  if [[ ! -f "$config_file" ]]; then
-    warn "config.json tidak ditemukan di ${config_file}, skip auto-update plugins.allow"
-    return 0
+cleanup_legacy_backups_in_extensions() {
+  local ext_dir="${HOME}/.openclaw/extensions"
+  if [[ -d "$ext_dir" ]]; then
+    find "$ext_dir" -maxdepth 1 -type d -name "${PLUGIN_ID}.backup.*" -print0 2>/dev/null | while IFS= read -r -d '' d; do
+      rm -rf "$d" || true
+      warn "Removed legacy backup inside extensions: $d"
+    done
   fi
+}
 
-  node <<'NODE' "$config_file" "$PLUGIN_ID"
+sync_openclaw_plugin_config() {
+  local plugin_id="$1"
+  local found_any="0"
+
+  # Candidate locations across common OpenClaw setups
+  local candidates=(
+    "${HOME}/.openclaw/config.json"
+    "${HOME}/.config/openclaw/config.json"
+    "/root/.openclaw/config.json"
+    "/root/.config/openclaw/config.json"
+  )
+
+  for cfg in "${candidates[@]}"; do
+    [[ -f "$cfg" ]] || continue
+    found_any="1"
+
+    node <<'NODE' "$cfg" "$plugin_id"
 const fs = require('fs');
-const path = process.argv[2];
+const cfgPath = process.argv[2];
 const pluginId = process.argv[3];
 
 try {
-  const raw = fs.readFileSync(path, 'utf8');
+  const raw = fs.readFileSync(cfgPath, 'utf8');
   const cfg = JSON.parse(raw || '{}');
 
   cfg.plugins = cfg.plugins || {};
-  cfg.plugins.allow = Array.isArray(cfg.plugins.allow) ? cfg.plugins.allow : [];
 
-  if (!cfg.plugins.allow.includes(pluginId)) {
-    cfg.plugins.allow.push(pluginId);
-    fs.writeFileSync(path, JSON.stringify(cfg, null, 2));
-    console.log('plugins.allow updated:', pluginId);
-  } else {
-    console.log('plugins.allow already contains:', pluginId);
+  // 1) pin trust allowlist
+  cfg.plugins.allow = Array.isArray(cfg.plugins.allow) ? cfg.plugins.allow : [];
+  if (!cfg.plugins.allow.includes(pluginId)) cfg.plugins.allow.push(pluginId);
+
+  // 2) remove stale entry (root cause: plugin not found warning)
+  if (cfg.plugins.entries && typeof cfg.plugins.entries === 'object') {
+    const entry = cfg.plugins.entries[pluginId];
+    if (entry && typeof entry === 'object') {
+      // keep runtime config payload if exists, but drop stale path/source keys
+      const cleaned = { ...entry };
+      delete cleaned.path;
+      delete cleaned.source;
+      delete cleaned.main;
+      cfg.plugins.entries[pluginId] = cleaned;
+    }
   }
+
+  fs.writeFileSync(cfgPath, JSON.stringify(cfg, null, 2));
+  console.log('synced plugin config:', cfgPath);
 } catch (e) {
-  console.error('failed to update config.json:', e.message);
+  console.error('failed to sync config', cfgPath, e.message);
   process.exit(1);
 }
 NODE
+  done
 
-  success "plugins.allow disinkronkan untuk ${PLUGIN_ID}"
+  if [[ "$found_any" == "1" ]]; then
+    success "Konfigurasi plugin disinkronkan (allowlist + stale cleanup)"
+  else
+    warn "Tidak menemukan config OpenClaw umum; skip sync config otomatis"
+  fi
 }
 
 TMP_DIR=""
@@ -197,8 +230,10 @@ main() {
 
   success "Plugin installed to: ${TARGET_DIR}"
 
+  cleanup_legacy_backups_in_extensions
+
   if command -v openclaw >/dev/null 2>&1; then
-    update_plugins_allow_if_possible || warn "Tidak bisa update plugins.allow otomatis"
+    sync_openclaw_plugin_config "$PLUGIN_ID" || warn "Tidak bisa sinkronisasi config otomatis"
 
     if [[ "$NO_RESTART" != "1" ]]; then
       info "Restarting OpenClaw gateway..."
