@@ -18,7 +18,7 @@
   "license": "MIT",
   "openclaw": {
     "extensions": [
-      "./openclaw.plugin.json"
+      "./index.js"
     ]
   },
   "devDependencies": {
