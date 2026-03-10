@@ -4,7 +4,7 @@ Plugin integrasi resmi untuk menghubungkan OpenClaw dengan ekosistem **Smart Rep
 
 ## 🚀 Quick Start
 ```bash
-# 1. Instal Plugin
+# 1. Instal Plugin (NPM)
 openclaw plugins install @sodikinnaa/smart-report-plugin
 
 # 2. Aktivasi Token
@@ -12,6 +12,54 @@ openclaw smart-auth YOUR_SECRET_TOKEN
 
 # 3. Cek status semua fungsi MCP
 openclaw smart-status
+```
+
+## 🛠️ Instalasi Manual via `install.sh` (Recommended untuk server custom)
+Script `install.sh` akan:
+- clone source plugin dari GitHub,
+- install dependency + build,
+- verifikasi export `register/activate`,
+- copy plugin ke `~/.openclaw/extensions/smart-report-plugin`,
+- update `plugins.allow` (jika `~/.openclaw/config.json` tersedia),
+- restart OpenClaw Gateway.
+
+### 1) Jalankan langsung dari GitHub
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/sodikinnaa/smart-report-plugin/master/install.sh)
+```
+
+### 2) Opsi parameter
+```bash
+# Install branch tertentu
+bash <(curl -fsSL https://raw.githubusercontent.com/sodikinnaa/smart-report-plugin/master/install.sh) --branch master
+
+# Custom repository
+bash <(curl -fsSL https://raw.githubusercontent.com/sodikinnaa/smart-report-plugin/master/install.sh) --repo https://github.com/sodikinnaa/smart-report-plugin.git
+
+# Jika repo private (token)
+bash <(curl -fsSL https://raw.githubusercontent.com/sodikinnaa/smart-report-plugin/master/install.sh) --token <GITHUB_TOKEN>
+
+# Skip build / restart
+bash <(curl -fsSL https://raw.githubusercontent.com/sodikinnaa/smart-report-plugin/master/install.sh) --skip-build
+bash <(curl -fsSL https://raw.githubusercontent.com/sodikinnaa/smart-report-plugin/master/install.sh) --no-restart
+```
+
+### 3) Verifikasi setelah instalasi
+```bash
+openclaw smart-auth <TOKEN_SMART_REPORT>
+openclaw smart-status
+```
+
+### 4) Troubleshooting cepat
+```bash
+# Cek plugin terpasang
+ls -la ~/.openclaw/extensions/smart-report-plugin
+
+# Cek export register/activate
+node -e "const m=require(process.env.HOME+'/.openclaw/extensions/smart-report-plugin/dist/openclaw.cjs'); console.log(typeof m, typeof m.register, typeof m.activate)"
+
+# Restart gateway manual
+openclaw gateway restart
 ```
 
 ## ✅ Command Tambahan
