@@ -156,13 +156,19 @@ try {
   cfg.plugins.allow = Array.isArray(cfg.plugins.allow) ? cfg.plugins.allow : [];
   if (!cfg.plugins.allow.includes(pluginId)) cfg.plugins.allow.push(pluginId);
 
-  // 2) hard-clean stale records (entries + installs)
-  if (cfg.plugins.entries && typeof cfg.plugins.entries === 'object') {
-    delete cfg.plugins.entries[pluginId];
-  }
+  // 2) clean stale install record, then ensure plugin entry is explicitly enabled
   if (cfg.plugins.installs && typeof cfg.plugins.installs === 'object') {
     delete cfg.plugins.installs[pluginId];
   }
+  cfg.plugins.entries = cfg.plugins.entries || {};
+  const prevEntry = (cfg.plugins.entries[pluginId] && typeof cfg.plugins.entries[pluginId] === 'object')
+    ? cfg.plugins.entries[pluginId]
+    : {};
+  cfg.plugins.entries[pluginId] = {
+    ...prevEntry,
+    enabled: true,
+    config: (prevEntry.config && typeof prevEntry.config === 'object') ? prevEntry.config : {}
+  };
 
   // 3) force discovery path for manual fallback installs
   cfg.plugins.load = cfg.plugins.load || {};
