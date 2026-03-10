@@ -8,11 +8,37 @@ exports.activate = exports.register = void 0;
  * Smart Report MCP Plugin for OpenClaw
  */
 const axios_1 = __importDefault(require("axios"));
+const fs_1 = __importDefault(require("fs"));
+const path_1 = __importDefault(require("path"));
 const PLUGIN_ID = 'smart-report-plugin';
 const API_BASE = 'https://smartreport.siapdigital.my.id/api/mcp';
+function resolveToken(api) {
+    return api?.pluginConfig?.apiToken
+        || api?.config?.apiToken
+        || api?.config?.plugins?.entries?.[PLUGIN_ID]?.config?.apiToken;
+}
+function saveTokenFallback(token, companyInfo) {
+    const cfgPath = path_1.default.join(process.env.HOME || '/root', '.openclaw', 'openclaw.json');
+    if (!fs_1.default.existsSync(cfgPath))
+        return;
+    const cfg = JSON.parse(fs_1.default.readFileSync(cfgPath, 'utf8'));
+    cfg.plugins = cfg.plugins || {};
+    cfg.plugins.entries = cfg.plugins.entries || {};
+    cfg.plugins.entries[PLUGIN_ID] = cfg.plugins.entries[PLUGIN_ID] || {};
+    cfg.plugins.entries[PLUGIN_ID].enabled = true;
+    cfg.plugins.entries[PLUGIN_ID].config = cfg.plugins.entries[PLUGIN_ID].config || {};
+    cfg.plugins.entries[PLUGIN_ID].config.apiToken = token;
+    if (companyInfo?.name)
+        cfg.plugins.entries[PLUGIN_ID].config.companyName = companyInfo.name;
+    if (companyInfo?.domain)
+        cfg.plugins.entries[PLUGIN_ID].config.companyDomain = companyInfo.domain;
+    cfg.plugins.allow = Array.isArray(cfg.plugins.allow) ? cfg.plugins.allow : [];
+    if (!cfg.plugins.allow.includes(PLUGIN_ID))
+        cfg.plugins.allow.push(PLUGIN_ID);
+    fs_1.default.writeFileSync(cfgPath, JSON.stringify(cfg, null, 2));
+}
 async function callMcp(api, method, params = {}) {
-    const config = api.config;
-    const token = config?.apiToken;
+    const token = resolveToken(api);
     if (!token) {
         throw new Error('API Token not found. Please run "openclaw smart-auth <token>" first.');
     }
@@ -47,13 +73,19 @@ const plugin = {
                 process.stdout.write('🔍 Verifying token and fetching company info...');
                 try {
                     // Temporarily set token to verify
-                    api.config.apiToken = token;
+                    api.pluginConfig = api.pluginConfig || {};
+                    api.pluginConfig.apiToken = token;
                     const companyInfo = await callMcp(api, 'company/info', {});
-                    await api.saveConfig({
-                        apiToken: token,
-                        companyName: companyInfo.name,
-                        companyDomain: companyInfo.domain
-                    });
+                    if (typeof api.saveConfig === 'function') {
+                        await api.saveConfig({
+                            apiToken: token,
+                            companyName: companyInfo.name,
+                            companyDomain: companyInfo.domain
+                        });
+                    }
+                    else {
+                        saveTokenFallback(token, companyInfo);
+                    }
                     console.log(`\r✅ Authenticated for: ${companyInfo.name} (${companyInfo.domain})`);
                     console.log('   Smart Report API Token saved successfully.');
                 }
@@ -103,56 +135,61 @@ const plugin = {
             });
         }, { commands: ['smart-auth', 'smart-status'] });
         // 2. Resources
-        api.registerResource({
-            uri: 'smartreport://reports',
-            name: 'Recent Reports',
-            description: 'Stream of latest submitted reports',
-            mimeType: 'application/json',
-            read: async () => {
-                const data = await callMcp(api, 'reports/list', { per_page: 10 });
-                return { content: JSON.stringify(data, null, 2) };
-            }
-        });
-        api.registerResource({
-            uri: 'smartreport://employees',
-            name: 'Employee List',
-            description: 'Complete list of active employees with division names',
-            mimeType: 'application/json',
-            read: async () => {
-                const data = await callMcp(api, 'employees/list', {});
-                return { content: JSON.stringify(data, null, 2) };
-            }
-        });
-        api.registerResource({
-            uri: 'smartreport://divisions',
-            name: 'Division List',
-            description: 'List of all divisions in the company',
-            mimeType: 'application/json',
-            read: async () => {
-                const data = await callMcp(api, 'divisions/list', {});
-                return { content: JSON.stringify(data, null, 2) };
-            }
-        });
-        api.registerResource({
-            uri: 'smartreport://guides',
-            name: 'Guides List',
-            description: 'List of all available dynamic guides',
-            mimeType: 'application/json',
-            read: async () => {
-                const data = await callMcp(api, 'guides/list', {});
-                return { content: JSON.stringify(data, null, 2) };
-            }
-        });
-        api.registerResource({
-            uri: 'smartreport://dashboard',
-            name: 'Daily Dashboard',
-            description: 'Real-time KPI dashboard (stats, highlights, alerts)',
-            mimeType: 'application/json',
-            read: async (params) => {
-                const data = await callMcp(api, 'smartreport/dashboard', params || {});
-                return { content: JSON.stringify(data, null, 2) };
-            }
-        });
+        if (typeof api.registerResource === 'function')
+            api.registerResource({
+                uri: 'smartreport://reports',
+                name: 'Recent Reports',
+                description: 'Stream of latest submitted reports',
+                mimeType: 'application/json',
+                read: async () => {
+                    const data = await callMcp(api, 'reports/list', { per_page: 10 });
+                    return { content: JSON.stringify(data, null, 2) };
+                }
+            });
+        if (typeof api.registerResource === 'function')
+            api.registerResource({
+                uri: 'smartreport://employees',
+                name: 'Employee List',
+                description: 'Complete list of active employees with division names',
+                mimeType: 'application/json',
+                read: async () => {
+                    const data = await callMcp(api, 'employees/list', {});
+                    return { content: JSON.stringify(data, null, 2) };
+                }
+            });
+        if (typeof api.registerResource === 'function')
+            api.registerResource({
+                uri: 'smartreport://divisions',
+                name: 'Division List',
+                description: 'List of all divisions in the company',
+                mimeType: 'application/json',
+                read: async () => {
+                    const data = await callMcp(api, 'divisions/list', {});
+                    return { content: JSON.stringify(data, null, 2) };
+                }
+            });
+        if (typeof api.registerResource === 'function')
+            api.registerResource({
+                uri: 'smartreport://guides',
+                name: 'Guides List',
+                description: 'List of all available dynamic guides',
+                mimeType: 'application/json',
+                read: async () => {
+                    const data = await callMcp(api, 'guides/list', {});
+                    return { content: JSON.stringify(data, null, 2) };
+                }
+            });
+        if (typeof api.registerResource === 'function')
+            api.registerResource({
+                uri: 'smartreport://dashboard',
+                name: 'Daily Dashboard',
+                description: 'Real-time KPI dashboard (stats, highlights, alerts)',
+                mimeType: 'application/json',
+                read: async (params) => {
+                    const data = await callMcp(api, 'smartreport/dashboard', params || {});
+                    return { content: JSON.stringify(data, null, 2) };
+                }
+            });
         // 3. Agent Tools
         api.registerTool({
             name: 'get_daily_dashboard',
