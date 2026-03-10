@@ -9,7 +9,7 @@ exports.activate = exports.register = void 0;
  */
 const axios_1 = __importDefault(require("axios"));
 const PLUGIN_ID = 'smart-report-plugin';
-const API_BASE = 'https://member.smartreport.my.id/api/mcp';
+const API_BASE = 'https://smartreport.siapdigital.my.id/api/mcp';
 async function callMcp(api, method, params = {}) {
     const config = api.config;
     const token = config?.apiToken;

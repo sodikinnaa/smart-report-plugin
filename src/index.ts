@@ -4,7 +4,7 @@
 import axios from 'axios';
 
 const PLUGIN_ID = 'smart-report-plugin';
-const API_BASE = 'https://member.smartreport.my.id/api/mcp';
+const API_BASE = 'https://smartreport.siapdigital.my.id/api/mcp';
 
 async function callMcp(api: any, method: string, params: any = {}) {
     const config: any = api.config;
