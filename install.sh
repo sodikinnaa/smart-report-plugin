@@ -222,10 +222,10 @@ main() {
   fi
 
   [[ -f "$TMP_DIR/repo/openclaw.plugin.json" ]] || fatal "openclaw.plugin.json tidak ditemukan"
-  [[ -f "$TMP_DIR/repo/dist/openclaw.cjs" ]] || fatal "dist/openclaw.cjs tidak ditemukan"
+  [[ -f "$TMP_DIR/repo/dist/index.js" ]] || fatal "dist/index.js tidak ditemukan"
 
   info "Verifying register/activate export..."
-  node -e "const m=require('$TMP_DIR/repo/dist/openclaw.cjs'); const ok=(typeof m==='function'||typeof m.register==='function'||typeof m.activate==='function'); if(!ok){throw new Error('register/activate export not found')} console.log('OK');" >/dev/null || fatal "Plugin export invalid (register/activate tidak ada)"
+  node -e "const m=require('$TMP_DIR/repo/dist/index.js'); const ok=(typeof m==='function'||typeof m.register==='function'||typeof m.activate==='function'); if(!ok){throw new Error('register/activate export not found')} console.log('OK');" >/dev/null || fatal "Plugin export invalid (register/activate tidak ada)"
   success "Export register/activate valid"
 
   mkdir -p "$(dirname "$TARGET_DIR")"
@@ -265,8 +265,15 @@ main() {
 
     if [[ "$install_ok" == "1" ]]; then
       success "Plugin installed via openclaw plugins install"
-    else
 
+      # Validate installed artifact, because some OpenClaw versions may resolve stale package contents.
+      if ! node -e "const p='$TARGET_DIR/dist/index.js'; const m=require(p); const ok=(typeof m.register==='function'||typeof m.activate==='function'||typeof m==='function'); if(!ok) process.exit(1);" >/dev/null 2>&1; then
+        warn "Installed artifact invalid (register/activate not found), forcing manual overwrite from built source"
+        install_ok="0"
+      fi
+    fi
+
+    if [[ "$install_ok" != "1" ]]; then
       if [[ -d "$TARGET_DIR" ]]; then
         local backup_root backup_dir
         backup_root="${HOME}/.openclaw/extensions-backup/${PLUGIN_ID}"
@@ -280,6 +287,7 @@ main() {
       cp -R \
         "$TMP_DIR/repo/openclaw.plugin.json" \
         "$TMP_DIR/repo/dist" \
+        "$TMP_DIR/repo/src" \
         "$TMP_DIR/repo/skills" \
         "$TMP_DIR/repo/README.md" \
         "$TARGET_DIR/"
@@ -335,7 +343,7 @@ Langkah verifikasi:
 Jika masih error:
   - Jalankan: openclaw plugins doctor
   - Cek entrypoint: ${TARGET_DIR}/openclaw.plugin.json
-  - Cek export:    node -e "const m=require('${TARGET_DIR}/dist/openclaw.cjs'); console.log(typeof m, typeof m.register, typeof m.activate)"
+  - Cek export:    node -e "const m=require('${TARGET_DIR}/dist/index.js'); console.log(typeof m, typeof m.register, typeof m.activate)"
 EOF
 }
 
