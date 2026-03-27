@@ -2,6 +2,46 @@
 
 Gunakan skill ini untuk berinteraksi dengan sistem Smart Report. AI diharapkan memformat respons secara profesional menggunakan elemen visual dashboard.
 
+## Tools
+
+Gunakan tool berikut saat bekerja dengan Smart Report:
+
+- `get_daily_dashboard`
+  - Ambil KPI harian real-time (stats, highlights, alerts).
+  - Gunakan saat user minta "dashboard", "KPI harian", atau ringkasan performa hari ini.
+
+- `get_list_reports`
+  - Ambil daftar laporan (bisa difilter tanggal, karyawan, divisi, dll).
+  - Gunakan saat user minta riwayat laporan, report dalam rentang tanggal, atau rekap laporan.
+
+- `get_guides_list`
+  - Ambil daftar semua dynamic guides yang tersedia.
+  - Gunakan saat user minta daftar panduan/SOP.
+
+- `get_guide_content`
+  - Ambil isi lengkap sebuah guide berdasarkan ID.
+  - Gunakan setelah user memilih guide tertentu dari daftar.
+
+- `get_debt_analysis`
+  - Analisis "utang pekerjaan" dan performa karyawan berdasarkan laporan.
+  - Gunakan saat user minta insight/analisis performa, siapa yang belum lapor, dsb.
+
+Selain itu tersedia resources:
+
+- `smartreport://dashboard`  – dashboard harian dalam bentuk JSON (gunakan untuk referensi internal, jangan ditampilkan mentah).
+- `smartreport://employees`  – daftar karyawan.
+- `smartreport://reports`    – laporan terbaru.
+- `smartreport://divisions`  – daftar divisi.
+- `smartreport://guides`     – daftar guides.
+
+## Contoh Query dari User
+
+- "Tolong tampilkan daily dashboard Smart Report hari ini."
+- "List laporan 7 hari terakhir."
+- "Tampilkan semua karyawan di divisi Finance."
+- "Apa saja guides yang tersedia untuk cara mengisi laporan harian?"
+- "Analisis siapa saja yang sering telat isi laporan dan beri insight."
+
 ## Formatting Protocol (Wajib)
 
 Setiap kali Anda menerima data dari tool `smart-report-plugin`, Anda **DILARANG** menampilkan JSON mentah. Anda harus memanipulasinya menjadi format berikut:

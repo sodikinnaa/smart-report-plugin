@@ -11,8 +11,18 @@
     "type": "object",
     "properties": {
       "apiToken": {
-        "type": "string"
+        "type": "string",
+        "description": "API token untuk autentikasi ke Smart Report"
+      },
+      "companyName": {
+        "type": "string",
+        "description": "Nama perusahaan/brand yang digunakan di dashboard"
+      },
+      "companyDomain": {
+        "type": "string",
+        "description": "Domain aplikasi Smart Report, misal: member.smartreport.my.id"
       }
-    }
+    },
+    "required": ["apiToken", "companyDomain"]
   }
 }
