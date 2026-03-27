@@ -48,7 +48,8 @@ async function callMcp(api: any, method: string, params: any = {}) {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
             'Accept': 'application/json'
-        }
+        },
+        timeout: 8000 // 8 detik timeout agar agent tidak menunggu terlalu lama jika MCP lambat
     });
 
     if (response.data.error) {
