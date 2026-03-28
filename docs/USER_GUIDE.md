@@ -1,97 +1,277 @@
-# 📊 Panduan Lengkap Smart Report MCP Plugin
+# Panduan Pengguna Smart Report Plugin
 
-Selamat datang di ekosistem Smart Report! Plugin ini memungkinkan asisten AI Anda (OpenClaw) terhubung langsung dengan data operasional perusahaan secara real-time.
+Plugin ini menghubungkan OpenClaw dengan Smart Report untuk kebutuhan dashboard KPI, daftar laporan, guides, dan analisis performa.
+
+## Prasyarat
+
+- Node.js 20+
+- OpenClaw terpasang dan CLI `openclaw` tersedia
+- Konfigurasi OpenClaw utama sehat, terutama `gateway.mode`
+- Token API Smart Report yang valid
+- Akses internet ke endpoint Smart Report
 
 ---
 
-## 1. Prasyarat (Prerequisites)
+## SOP Instalasi dan Update yang Aman
 
-Sebelum instalasi, pastikan Anda memiliki:
-*   **Environment:** Node.js v20+ dan OpenClaw Gateway terpasang.
-*   **Token API:** Token akses sah dari Admin Smart Report (Misal: `Wkr4v8Tj...`).
-*   **Akses Internet:** Dibutuhkan untuk instalasi package dan request data ke server.
+Ikuti SOP ini agar plugin tidak berubah menjadi **untracked local code**, tidak memicu warning provenance, dan tidak merusak state konfigurasi OpenClaw.
 
----
+### Prinsip utama
 
-## 2. Instalasi (Installation)
+1. **Selalu update plugin dari repository resmi**
+2. **Jangan copy manual plugin ke `~/.openclaw/extensions/...`**
+3. **Jangan overwrite folder plugin secara manual**
+4. **Jangan edit config OpenClaw secara agresif dari installer plugin**
+5. **Pastikan `openclaw plugins install` menjadi jalur utama install/update**
 
-### Jalur Normal (NPM)
-Gunakan perintah ini di terminal OpenClaw:
+### Jalur install/update utama
+
+Gunakan command ini:
+
 ```bash
-openclaw plugins install @sodikinnaa/smart-report-plugin
+bash <(curl -fsSL https://raw.githubusercontent.com/sodikinnaa/smart-report-plugin/master/install.sh)
 ```
 
-### Jalur Fallback (Jika NPM/Cache Bermasalah)
-Jika instalasi gagal karena kendala versi lama atau cache, gunakan link tarball langsung:
+Atau dari repository lokal:
+
 ```bash
-openclaw plugins install https://registry.npmjs.org/@sodikinnaa/smart-report-plugin/-/smart-report-plugin-1.0.8.tgz
+bash install.sh
 ```
 
 ---
 
-## 3. Aktivasi & Autentikasi (Auth)
+## SOP Instalasi Pertama Kali
 
-Setelah terinstal, Anda wajib mendaftarkan token Anda agar AI bisa mengakses data:
+### 1. Pastikan OpenClaw sehat lebih dulu
 
-**Perintah:**
+Cek bahwa config utama tidak rusak dan gateway bisa start.
+
+Minimal pastikan `gateway.mode` ada, misalnya:
+
+```json
+{
+  "gateway": {
+    "mode": "local"
+  }
+}
+```
+
+Jika `openclaw gateway` menampilkan error seperti:
+
+```bash
+Gateway start blocked: set gateway.mode=local (current: unset)
+```
+
+maka **perbaiki dulu config OpenClaw utama** sebelum install plugin.
+
+### 2. Pastikan tidak ada folder plugin lama yang kotor
+
+Sebelum install pertama kali, cek apakah plugin lama sudah pernah dicopy manual:
+
+```bash
+ls -la ~/.openclaw/extensions/smart-report-plugin
+```
+
+Jika folder itu sudah ada dari install lama/manual, **backup lalu hapus dulu** sebelum install ulang.
+
+### 3. Jalankan installer resmi
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/sodikinnaa/smart-report-plugin/master/install.sh)
+```
+
+### 4. Auth token setelah install sukses
+
 ```bash
 openclaw smart-auth <TOKEN_ANDA>
 ```
 
-**Contoh Sukses:**
-`✅ Smart Report API Token saved successfully.`
+### 5. Verifikasi plugin
 
-**Contoh Gagal:**
-`❌ Failed to save config: ...` (Pastikan Anda menjalankan perintah di terminal yang memiliki izin tulis ke folder `.openclaw`).
-
----
-
-## 4. Daftar Resource & Tool
-
-### 🔎 Resource (Data Statis/Stream)
-AI dapat membaca resource ini untuk mendapatkan konteks:
-*   `smartreport://dashboard`: Data KPI hari ini (Total karyawan, kehadiran, completion rate).
-*   `smartreport://employees`: Daftar lengkap karyawan beserta nama divisinya.
-*   `smartreport://reports`: Aliran 10 laporan terbaru yang masuk.
-*   `smartreport://divisions`: Daftar seluruh divisi di perusahaan.
-
-### 🛠️ Agent Tools (Aksi Dinamis)
-AI dapat menjalankan perintah spesifik:
-*   **`get_daily_dashboard`**: Mengambil ringkasan statistik harian.
-*   **`get_list_reports`**: Mencari laporan berdasarkan filter (tanggal, divisi, nama).
-*   **`get_debt_analysis`**: Menganalisis siapa saja yang belum lapor atau memiliki tugas tertunda.
+```bash
+openclaw smart-status
+```
 
 ---
 
-## 5. Mode Dashboard
+## SOP Update Plugin
 
-Saat meminta dashboard, Anda dapat menentukan `mode`:
-1.  **Compact (Default):** Ringkasan angka utama saja. Cocok untuk update cepat di chat.
-2.  **Full:** Menyertakan detail statistik per divisi. Cocok untuk laporan manajemen.
-3.  **Ops:** Menyertakan alert sistem dan highlight operasional. Cocok untuk monitoring tim.
+### Alur normal update
+
+1. perubahan plugin di-commit dan di-push ke repository
+2. mesin target menjalankan installer resmi lagi
+3. installer clone source terbaru
+4. installer build source terbaru
+5. installer menjalankan `openclaw plugins install` dari repository source
+6. lakukan verifikasi
+
+### Command update normal
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/sodikinnaa/smart-report-plugin/master/install.sh)
+```
+
+### Setelah update
+
+Jalankan verifikasi:
+
+```bash
+openclaw smart-status
+```
+
+Jika plugin butuh re-auth karena environment berubah, jalankan ulang:
+
+```bash
+openclaw smart-auth <TOKEN_ANDA>
+```
 
 ---
 
-## 6. Workflow Harian (Best Practice)
+## SOP Larangan / Anti-Pattern
 
-Berikut adalah contoh alur kerja asisten AI Anda setiap hari:
-1.  **Pagi (09:00):** AI mengecek `smartreport://employees` untuk memetakan tim.
-2.  **Siang (13:00):** AI menjalankan `get_daily_dashboard(mode="compact")` untuk melihat progres awal.
-3.  **Sore (17:00):** AI menjalankan `get_debt_analysis` dan memberikan daftar orang yang belum lapor kepada Admin.
-4.  **Malam (20:00):** AI menarik `get_daily_dashboard(mode="full")` untuk laporan penutup ke WhatsApp Owner.
+Jangan lakukan ini kecuali sedang recovery yang disengaja:
+
+- copy manual plugin ke:
+  - `~/.openclaw/extensions/smart-report-plugin`
+- overwrite file plugin langsung dengan `cp -R`
+- membiarkan folder plugin lama tetap ada lalu install ulang di atasnya
+- memaksa installer menulis config trust/provenance OpenClaw tanpa audit
+- menjadikan fallback manual sebagai jalur update normal
+
+Alasan larangan ini:
+- memicu warning `loaded without install/load-path provenance`
+- membuat plugin dianggap **untracked local code**
+- bisa menimbulkan state config yang rancu
+- menyulitkan troubleshooting update berikutnya
+
+---
+
+## SOP Recovery Jika Update Gagal
+
+Jika installer gagal, **jangan langsung copy manual plugin**.
+
+Lakukan urutan ini:
+
+### 1. Lihat penyebab gagalnya install resmi
+
+```bash
+openclaw plugins list --verbose
+openclaw plugins doctor
+```
+
+### 2. Cek blocker paling umum
+
+#### a. Plugin lama masih ada
+Contoh error:
+```bash
+plugin already exists: ~/.openclaw/extensions/smart-report-plugin
+```
+
+Tindakan:
+- backup folder lama
+- hapus folder lama
+- ulangi installer resmi
+
+#### b. Config OpenClaw utama rusak
+Contoh error:
+```bash
+Gateway start blocked: set gateway.mode=local (current: unset)
+```
+
+Tindakan:
+- pulihkan `gateway.mode`
+- pastikan `openclaw gateway` bisa jalan normal
+- baru ulangi installer plugin
+
+#### c. Warning trust/provenance
+Contoh warning:
+```bash
+loaded without install/load-path provenance
+plugins.allow is empty
+```
+
+Tindakan:
+- rapikan install lama yang manual/untracked
+- pin trust sesuai kebijakan OpenClaw host
+- ulangi install dari jalur resmi
 
 ---
 
-## 7. Troubleshooting (Solusi Cepat)
+## Konfigurasi Plugin
 
-*   **Error: `ReferenceError exports is not defined`**
-    *   *Solusi:* Update ke versi v1.0.6+ (`npm install ...@latest`).
-*   **Error: `package.json missing openclaw.extensions`**
-    *   *Solusi:* Update ke versi v1.0.4+.
-*   **Error: `Method not found (-32601)`**
-    *   *Solusi:* Pastikan backend sudah terupdate ke v1.3.0.
-*   **Error: `Unauthorized`**
-    *   *Solusi:* Masukkan kembali token valid menggunakan `openclaw smart-auth`.
+Plugin menyimpan konfigurasi berikut setelah autentikasi berhasil:
+- `apiToken`
+- `companyDomain`
+- `companyName` *(optional)*
+
+Konfigurasi ini **tidak perlu dipaksa ada saat install awal**.
 
 ---
-*Dokumentasi ini dibuat oleh Sultan Engine Core untuk memastikan kelancaran operasional Anda.*
+
+## Autentikasi Token
+
+```bash
+openclaw smart-auth <TOKEN_ANDA>
+```
+
+Command ini akan:
+- memverifikasi token ke backend Smart Report
+- mengambil info company
+- menyimpan konfigurasi plugin melalui runtime OpenClaw
+
+---
+
+## Health Check
+
+```bash
+openclaw smart-status
+```
+
+Command ini memeriksa:
+- `company/info`
+- `smartreport/dashboard`
+- `employees/list`
+- `reports/list`
+- `divisions/list`
+- `guides/list`
+- `analyze_performance`
+
+---
+
+## Resource Tersedia
+
+- `smartreport://dashboard`
+- `smartreport://employees`
+- `smartreport://reports`
+- `smartreport://divisions`
+- `smartreport://guides`
+
+## Tools Tersedia
+
+- `get_daily_dashboard`
+- `get_guides_list`
+- `get_guide_content`
+- `get_list_reports`
+- `get_debt_analysis`
+
+---
+
+## Catatan Penting Output
+
+Tool mengembalikan data JSON untuk reasoning internal agent. Untuk interaksi dengan user, gunakan formatting yang diarahkan oleh skill plugin `smart-report` agar tidak menampilkan JSON mentah.
+
+---
+
+## Troubleshooting Singkat
+
+### Token tidak ditemukan
+Pastikan sudah menjalankan:
+```bash
+openclaw smart-auth <TOKEN_ANDA>
+```
+
+### Plugin runtime tidak mendukung penyimpanan config
+Konfigurasikan plugin melalui mekanisme config OpenClaw yang berlaku pada environment target.
+
+### Backend mengembalikan error method/auth
+Periksa token, domain backend, dan kompatibilitas endpoint Smart Report.
