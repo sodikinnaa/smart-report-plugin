@@ -1,14 +1,15 @@
 {
   "id": "smart-report-plugin",
   "name": "Smart Report Integration",
-  "version": "2100.11.5",
+  "version": "2100.11.6",
   "description": "Integration plugin for Smart Report and AI Analytics with Daily Dashboard and Dynamic Guides",
   "entrypoint": "./index.js",
   "skills": [
-    "skills/smart-report/SKILL.md"
+    "./skills"
   ],
   "configSchema": {
     "type": "object",
+    "additionalProperties": false,
     "properties": {
       "apiToken": {
         "type": "string",
@@ -22,7 +23,6 @@
         "type": "string",
         "description": "Domain aplikasi Smart Report, misal: member.smartreport.my.id"
       }
-    },
-    "required": ["apiToken", "companyDomain"]
+    }
   }
 }
