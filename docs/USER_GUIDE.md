@@ -88,6 +88,11 @@ Installer akan mencoba backup install lama **hanya** jika kegagalan terdeteksi k
 openclaw smart-auth <TOKEN_ANDA>
 ```
 
+Catatan operasional:
+- installer tidak me-restart gateway secara otomatis secara default
+- ini sengaja untuk mengurangi risiko channel aktif seperti Telegram ikut terputus setelah install/update
+- jika memang butuh restart otomatis, jalankan installer dengan `--restart`
+
 ### 5. Verifikasi plugin
 
 ```bash

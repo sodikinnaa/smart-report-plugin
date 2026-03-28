@@ -24,10 +24,14 @@ function resolveToken(api) {
     return undefined;
 }
 async function savePluginConfig(api, config) {
-    if (typeof api.saveConfig !== 'function') {
-        throw new Error('Plugin runtime does not expose saveConfig(). Configure plugin settings through OpenClaw config.');
+    if (typeof api.saveConfig === 'function') {
+        await api.saveConfig(config);
+        return;
     }
-    await api.saveConfig(config);
+    api.pluginConfig = {
+        ...(api.pluginConfig || {}),
+        ...config,
+    };
 }
 async function callMcp(api, method, params = {}) {
     const token = resolveToken(api);

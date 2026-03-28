@@ -13,7 +13,7 @@ REPO_URL="https://github.com/sodikinnaa/smart-report-plugin.git"
 BRANCH="master"
 TARGET_DIR="${HOME}/.openclaw/extensions/${PLUGIN_ID}"
 SKIP_BUILD="0"
-NO_RESTART="0"
+NO_RESTART="1"
 GITHUB_TOKEN="${GITHUB_TOKEN:-}"
 TMP_DIR=""
 INSTALL_LOG=""
@@ -33,13 +33,15 @@ Options:
   --target <path>    Reserved for diagnostics only (default: ${TARGET_DIR})
   --token <token>    GitHub token untuk private repo (atau GITHUB_TOKEN env)
   --skip-build       Skip npm install/build step
-  --no-restart       Skip openclaw gateway restart
+  --restart          Restart openclaw gateway setelah install
+  --no-restart       Alias legacy; restart tetap di-skip secara default
   -h, --help         Show this help
 
 Examples:
   bash install.sh
   bash install.sh --branch main
   bash install.sh --repo https://github.com/sodikinnaa/smart-report-plugin.git
+  bash install.sh --restart
 
 Catatan:
   Script ini hanya bekerja dari repository/source code.
@@ -64,6 +66,8 @@ parse_args() {
         GITHUB_TOKEN="$2"; shift 2 ;;
       --skip-build)
         SKIP_BUILD="1"; shift ;;
+      --restart)
+        NO_RESTART="0"; shift ;;
       --no-restart)
         NO_RESTART="1"; shift ;;
       -h|--help)
@@ -240,7 +244,7 @@ EOF
       info "Restarting OpenClaw gateway..."
       openclaw gateway restart >/dev/null 2>&1 || warn "Gateway restart gagal. Jalankan manual: openclaw gateway restart"
     else
-      warn "Restart di-skip (--no-restart)"
+      warn "Restart gateway di-skip secara default untuk menghindari memutus channel aktif (mis. Telegram). Gunakan --restart jika memang ingin restart otomatis."
     fi
   fi
 

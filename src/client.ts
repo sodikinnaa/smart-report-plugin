@@ -26,11 +26,15 @@ export async function savePluginConfig(
   api: SmartReportApi,
   config: { apiToken: string; companyName?: string; companyDomain?: string }
 ): Promise<void> {
-  if (typeof api.saveConfig !== 'function') {
-    throw new Error('Plugin runtime does not expose saveConfig(). Configure plugin settings through OpenClaw config.');
+  if (typeof api.saveConfig === 'function') {
+    await api.saveConfig(config);
+    return;
   }
 
-  await api.saveConfig(config);
+  api.pluginConfig = {
+    ...(api.pluginConfig || {}),
+    ...config,
+  };
 }
 
 export async function callMcp(api: SmartReportApi, method: string, params: Record<string, unknown> = {}) {

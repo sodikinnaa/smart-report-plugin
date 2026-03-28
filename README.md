@@ -73,6 +73,10 @@ Setelah instalasi, autentikasi token dengan:
 openclaw smart-auth <TOKEN_ANDA>
 ```
 
+Catatan:
+- installer tidak me-restart gateway secara otomatis secara default agar channel aktif seperti Telegram tidak ikut terputus
+- jika memang perlu restart otomatis setelah install, gunakan `--restart`
+
 Untuk mengecek konektivitas backend dan method inti:
 
 ```bash

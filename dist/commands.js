@@ -37,6 +37,22 @@ function renderStatusSummary(checks) {
 function renderJsonText(title, data) {
     return `${title}\n\n${JSON.stringify(data, null, 2)}`;
 }
+function normalizeCommandArgs(args) {
+    const raw = (args ?? '').trim();
+    if (!raw) {
+        return {};
+    }
+    try {
+        const parsed = JSON.parse(raw);
+        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+            return parsed;
+        }
+        return { input: parsed };
+    }
+    catch {
+        return { input: raw };
+    }
+}
 function registerChatCommands(api) {
     if (typeof api.registerCommand !== 'function') {
         return;
@@ -45,12 +61,15 @@ function registerChatCommands(api) {
         api.registerCommand?.({
             name,
             description,
-            execute: async (args = {}) => {
+            acceptsArgs: true,
+            handler: async (ctx = {}) => {
                 try {
-                    return { text: await execute(args) };
+                    const args = normalizeCommandArgs(ctx.args);
+                    return { text: await execute(args, ctx) };
                 }
                 catch (error) {
                     const message = error instanceof Error ? error.message : 'Unknown Smart Report command error';
+                    api.logger?.warn?.(`smart-report-plugin command ${name} failed: ${message}`);
                     return { text: `❌ ${message}` };
                 }
             },
@@ -61,7 +80,7 @@ function registerChatCommands(api) {
         return renderStatusSummary(checks);
     });
     registerSmartCommand('smart-dashboard', 'Show Smart Report daily dashboard summary.', async (args) => {
-        const data = await (0, client_1.callMcp)(api, 'smartreport/dashboard', args || { mode: 'compact' });
+        const data = await (0, client_1.callMcp)(api, 'smartreport/dashboard', Object.keys(args || {}).length > 0 ? (args || {}) : { mode: 'compact' });
         return renderJsonText('📊 Smart Report Dashboard', data);
     });
     registerSmartCommand('smart-employees', 'Show employee list from Smart Report.', async (args) => {
@@ -69,7 +88,7 @@ function registerChatCommands(api) {
         return renderJsonText('👥 Smart Report Employees', data);
     });
     registerSmartCommand('smart-reports', 'Show report list from Smart Report.', async (args) => {
-        const data = await (0, client_1.callMcp)(api, 'reports/list', args || { per_page: 10 });
+        const data = await (0, client_1.callMcp)(api, 'reports/list', Object.keys(args || {}).length > 0 ? (args || {}) : { per_page: 10 });
         return renderJsonText('📝 Smart Report Reports', data);
     });
     registerSmartCommand('smart-divisions', 'Show divisions from Smart Report.', async (args) => {
@@ -129,5 +148,11 @@ function registerCommands(api) {
             });
         }, { commands: ['smart-auth', 'smart-status'] });
     }
-    registerChatCommands(api);
+    try {
+        registerChatCommands(api);
+    }
+    catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        api.logger?.error?.(`smart-report-plugin command registration failed gracefully: ${message}`);
+    }
 }
