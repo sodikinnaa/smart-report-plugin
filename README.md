@@ -117,6 +117,16 @@ npm test
 npm run build
 ```
 
+## Kompatibilitas OpenClaw 2026.3.24+
+
+Untuk runtime OpenClaw 2026.3.24 dan sejenisnya, plugin command chat/native harus didaftarkan dengan field `handler` (bukan `execute`) dan sebaiknya menyetel `acceptsArgs: true` bila command menerima argumen. Versi plugin ini sudah menyesuaikan pola tersebut agar tidak memicu error startup seperti:
+
+```text
+[plugins] command registration failed: Command handler must be a function
+```
+
+Jika command registration tetap gagal, plugin sekarang menangkap kegagalan registrasi command secara graceful agar tidak ikut menjatuhkan channel seperti Telegram saat startup gateway.
+
 ## Catatan desain
 
 - Struktur plugin sudah dipisah per responsibility: `commands`, `resources`, `tools`, `client`

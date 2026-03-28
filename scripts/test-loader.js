@@ -11,10 +11,18 @@ try {
     cli: 0,
     resources: 0,
     tools: 0,
+    commands: 0,
+    invalidCommandHandlers: 0,
   };
 
   const mockApi = {
     saveConfig: async () => {},
+    logger: {
+      info: () => {},
+      warn: () => {},
+      error: () => {},
+      debug: () => {},
+    },
     registerCli: () => {
       registrations.cli += 1;
     },
@@ -23,6 +31,14 @@ try {
     },
     registerTool: () => {
       registrations.tools += 1;
+    },
+    registerCommand: (def) => {
+      registrations.commands += 1;
+      const handlerType = typeof (def && def.handler);
+      if (handlerType !== 'function') {
+        console.error('Invalid command registration payload:', def);
+        registrations.invalidCommandHandlers += 1;
+      }
     },
   };
 
@@ -41,6 +57,16 @@ try {
 
   if (registrations.tools !== 5) {
     console.error(`❌ CI Gate Failed: expected 5 tools, got ${registrations.tools}`);
+    process.exit(1);
+  }
+
+  if (registrations.commands !== 8) {
+    console.error(`❌ CI Gate Failed: expected 8 commands, got ${registrations.commands}`);
+    process.exit(1);
+  }
+
+  if (registrations.invalidCommandHandlers !== 0) {
+    console.error(`❌ CI Gate Failed: found ${registrations.invalidCommandHandlers} command(s) without valid handler function`);
     process.exit(1);
   }
 

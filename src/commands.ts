@@ -2,7 +2,24 @@ import { callMcp, savePluginConfig, SmartReportApi } from './client';
 
 type CheckResult = { name: string; status: string; detail: string };
 
+type CommandContext = {
+  args?: string;
+  channel?: string;
+  senderId?: string;
+  from?: string;
+  to?: string;
+  messageThreadId?: number;
+  accountId?: string;
+  gatewayClientScopes?: string[];
+};
+
 type CommandApi = SmartReportApi & {
+  logger?: {
+    info?: (message: string) => void;
+    warn?: (message: string) => void;
+    error?: (message: string) => void;
+    debug?: (message: string) => void;
+  };
   registerCli?: Function;
   registerCommand?: Function;
 };
@@ -50,6 +67,24 @@ function renderJsonText(title: string, data: unknown): string {
   return `${title}\n\n${JSON.stringify(data, null, 2)}`;
 }
 
+function normalizeCommandArgs(args: string | undefined): Record<string, unknown> {
+  const raw = (args ?? '').trim();
+  if (!raw) {
+    return {};
+  }
+
+  try {
+    const parsed = JSON.parse(raw);
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+      return parsed as Record<string, unknown>;
+    }
+
+    return { input: parsed };
+  } catch {
+    return { input: raw };
+  }
+}
+
 function registerChatCommands(api: CommandApi) {
   if (typeof api.registerCommand !== 'function') {
     return;
@@ -58,16 +93,19 @@ function registerChatCommands(api: CommandApi) {
   const registerSmartCommand = (
     name: string,
     description: string,
-    execute: (args?: Record<string, unknown>) => Promise<string>
+    execute: (args?: Record<string, unknown>, ctx?: CommandContext) => Promise<string>
   ) => {
     api.registerCommand?.({
       name,
       description,
-      execute: async (args: Record<string, unknown> = {}) => {
+      acceptsArgs: true,
+      handler: async (ctx: CommandContext = {}) => {
         try {
-          return { text: await execute(args) };
+          const args = normalizeCommandArgs(ctx.args);
+          return { text: await execute(args, ctx) };
         } catch (error) {
           const message = error instanceof Error ? error.message : 'Unknown Smart Report command error';
+          api.logger?.warn?.(`smart-report-plugin command ${name} failed: ${message}`);
           return { text: `❌ ${message}` };
         }
       },
@@ -80,7 +118,7 @@ function registerChatCommands(api: CommandApi) {
   });
 
   registerSmartCommand('smart-dashboard', 'Show Smart Report daily dashboard summary.', async (args) => {
-    const data = await callMcp(api, 'smartreport/dashboard', args || { mode: 'compact' });
+    const data = await callMcp(api, 'smartreport/dashboard', Object.keys(args || {}).length > 0 ? (args || {}) : { mode: 'compact' });
     return renderJsonText('📊 Smart Report Dashboard', data);
   });
 
@@ -90,7 +128,7 @@ function registerChatCommands(api: CommandApi) {
   });
 
   registerSmartCommand('smart-reports', 'Show report list from Smart Report.', async (args) => {
-    const data = await callMcp(api, 'reports/list', args || { per_page: 10 });
+    const data = await callMcp(api, 'reports/list', Object.keys(args || {}).length > 0 ? (args || {}) : { per_page: 10 });
     return renderJsonText('📝 Smart Report Reports', data);
   });
 
@@ -159,5 +197,10 @@ export function registerCommands(api: CommandApi) {
     }, { commands: ['smart-auth', 'smart-status'] });
   }
 
-  registerChatCommands(api);
+  try {
+    registerChatCommands(api);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    api.logger?.error?.(`smart-report-plugin command registration failed gracefully: ${message}`);
+  }
 }
