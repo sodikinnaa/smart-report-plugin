@@ -156,8 +156,12 @@ main() {
     (cd "$TMP_DIR/repo" && npm ci >/dev/null 2>&1) || (cd "$TMP_DIR/repo" && npm install >/dev/null 2>&1) || fatal "npm install gagal"
 
     info "Building plugin..."
-    (cd "$TMP_DIR/repo" && npm run build >/dev/null 2>&1) || fatal "npm run build gagal"
-    success "Build selesai"
+    if (cd "$TMP_DIR/repo" && npm run build >"$TMP_DIR/build.log" 2>&1); then
+      success "Build selesai"
+    else
+      sed -n '1,160p' "$TMP_DIR/build.log" || true
+      fatal "npm run build gagal"
+    fi
   else
     warn "Build di-skip (--skip-build)"
   fi
