@@ -1,4 +1,7 @@
 import { SmartReportApi } from './client';
-export declare function registerCommands(api: SmartReportApi & {
+type CommandApi = SmartReportApi & {
     registerCli?: Function;
-}): void;
+    registerCommand?: Function;
+};
+export declare function registerCommands(api: CommandApi): void;
+export {};

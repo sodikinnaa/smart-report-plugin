@@ -261,6 +261,23 @@ Command ini memeriksa:
 - `get_list_reports`
 - `get_debt_analysis`
 
+## Smart Commands / Chat Commands
+
+Jika runtime OpenClaw mendukung native command di chat, plugin ini menyediakan command berikut:
+
+- `/smart-status`
+- `/smart-dashboard`
+- `/smart-employees`
+- `/smart-reports`
+- `/smart-divisions`
+- `/smart-guides`
+- `/smart-guide`
+- `/smart-analysis`
+
+Catatan:
+- `smart-auth` tetap command CLI, bukan command chat
+- command chat memakai logic yang sama dengan fungsi Smart Report utama, tetapi outputnya diarahkan untuk interaksi chat
+
 ---
 
 ## Catatan Penting Output

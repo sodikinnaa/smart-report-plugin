@@ -1,6 +1,7 @@
 import { SmartReportApi } from './client';
 type PluginApi = SmartReportApi & {
     registerCli?: Function;
+    registerCommand?: Function;
     registerResource?: Function;
     registerTool?: Function;
 };
