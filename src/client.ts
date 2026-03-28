@@ -1,4 +1,7 @@
 import axios from 'axios';
+import fs from 'fs';
+import os from 'os';
+import path from 'path';
 
 export const PLUGIN_ID = 'smart-report-plugin';
 export const API_BASE = 'https://member.smartreport.my.id/api/mcp';
@@ -22,6 +25,51 @@ export function resolveToken(api: SmartReportApi): string | undefined {
   return undefined;
 }
 
+function getCandidateConfigPaths(): string[] {
+  const home = os.homedir();
+  return [
+    path.join(home, '.openclaw', 'openclaw.json'),
+    path.join(home, '.openclaw', 'config.json'),
+    '/root/.openclaw/openclaw.json',
+    '/root/.openclaw/config.json',
+    '/etc/openclaw/openclaw.json',
+    '/etc/openclaw/config.json',
+  ];
+}
+
+function persistPluginConfigToFile(config: { apiToken: string; companyName?: string; companyDomain?: string }): void {
+  const configPath = getCandidateConfigPaths().find((candidate) => fs.existsSync(candidate));
+
+  if (!configPath) {
+    return;
+  }
+
+  const raw = fs.readFileSync(configPath, 'utf8');
+  const parsed = JSON.parse(raw || '{}');
+
+  parsed.plugins = parsed.plugins || {};
+  parsed.plugins.entries = parsed.plugins.entries || {};
+
+  const previousEntry = parsed.plugins.entries[PLUGIN_ID] && typeof parsed.plugins.entries[PLUGIN_ID] === 'object'
+    ? parsed.plugins.entries[PLUGIN_ID]
+    : {};
+
+  const previousConfig = previousEntry.config && typeof previousEntry.config === 'object'
+    ? previousEntry.config
+    : {};
+
+  parsed.plugins.entries[PLUGIN_ID] = {
+    ...previousEntry,
+    enabled: true,
+    config: {
+      ...previousConfig,
+      ...config,
+    },
+  };
+
+  fs.writeFileSync(configPath, JSON.stringify(parsed, null, 2));
+}
+
 export async function savePluginConfig(
   api: SmartReportApi,
   config: { apiToken: string; companyName?: string; companyDomain?: string }
@@ -35,6 +83,8 @@ export async function savePluginConfig(
     ...(api.pluginConfig || {}),
     ...config,
   };
+
+  persistPluginConfigToFile(config);
 }
 
 export async function callMcp(api: SmartReportApi, method: string, params: Record<string, unknown> = {}) {

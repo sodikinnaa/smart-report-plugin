@@ -229,7 +229,8 @@ openclaw smart-auth <TOKEN_ANDA>
 Command ini akan:
 - memverifikasi token ke backend Smart Report
 - mengambil info company
-- menyimpan konfigurasi plugin melalui runtime OpenClaw
+- menyimpan konfigurasi plugin melalui runtime OpenClaw bila tersedia
+- fallback menulis ke konfigurasi plugin OpenClaw agar token tetap terbaca pada proses CLI berikutnya
 
 ---
 

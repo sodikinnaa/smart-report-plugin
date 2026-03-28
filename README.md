@@ -76,6 +76,7 @@ openclaw smart-auth <TOKEN_ANDA>
 Catatan:
 - installer tidak me-restart gateway secara otomatis secara default agar channel aktif seperti Telegram tidak ikut terputus
 - jika memang perlu restart otomatis setelah install, gunakan `--restart`
+- `smart-auth` akan mencoba menyimpan token ke konfigurasi plugin OpenClaw agar bisa dipakai lintas proses CLI berikutnya
 
 Untuk mengecek konektivitas backend dan method inti:
 

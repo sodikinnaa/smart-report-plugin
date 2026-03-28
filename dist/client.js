@@ -9,6 +9,9 @@ exports.savePluginConfig = savePluginConfig;
 exports.callMcp = callMcp;
 exports.normalizeToolError = normalizeToolError;
 const axios_1 = __importDefault(require("axios"));
+const fs_1 = __importDefault(require("fs"));
+const os_1 = __importDefault(require("os"));
+const path_1 = __importDefault(require("path"));
 exports.PLUGIN_ID = 'smart-report-plugin';
 exports.API_BASE = 'https://member.smartreport.my.id/api/mcp';
 function resolveToken(api) {
@@ -23,6 +26,42 @@ function resolveToken(api) {
         return nestedToken;
     return undefined;
 }
+function getCandidateConfigPaths() {
+    const home = os_1.default.homedir();
+    return [
+        path_1.default.join(home, '.openclaw', 'openclaw.json'),
+        path_1.default.join(home, '.openclaw', 'config.json'),
+        '/root/.openclaw/openclaw.json',
+        '/root/.openclaw/config.json',
+        '/etc/openclaw/openclaw.json',
+        '/etc/openclaw/config.json',
+    ];
+}
+function persistPluginConfigToFile(config) {
+    const configPath = getCandidateConfigPaths().find((candidate) => fs_1.default.existsSync(candidate));
+    if (!configPath) {
+        return;
+    }
+    const raw = fs_1.default.readFileSync(configPath, 'utf8');
+    const parsed = JSON.parse(raw || '{}');
+    parsed.plugins = parsed.plugins || {};
+    parsed.plugins.entries = parsed.plugins.entries || {};
+    const previousEntry = parsed.plugins.entries[exports.PLUGIN_ID] && typeof parsed.plugins.entries[exports.PLUGIN_ID] === 'object'
+        ? parsed.plugins.entries[exports.PLUGIN_ID]
+        : {};
+    const previousConfig = previousEntry.config && typeof previousEntry.config === 'object'
+        ? previousEntry.config
+        : {};
+    parsed.plugins.entries[exports.PLUGIN_ID] = {
+        ...previousEntry,
+        enabled: true,
+        config: {
+            ...previousConfig,
+            ...config,
+        },
+    };
+    fs_1.default.writeFileSync(configPath, JSON.stringify(parsed, null, 2));
+}
 async function savePluginConfig(api, config) {
     if (typeof api.saveConfig === 'function') {
         await api.saveConfig(config);
@@ -32,6 +71,7 @@ async function savePluginConfig(api, config) {
         ...(api.pluginConfig || {}),
         ...config,
     };
+    persistPluginConfigToFile(config);
 }
 async function callMcp(api, method, params = {}) {
     const token = resolveToken(api);
