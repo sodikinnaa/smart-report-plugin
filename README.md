@@ -35,7 +35,12 @@ smart-report-plugin/
 
 ## Instalasi
 
-### Dari repository
+### Installer utama via raw GitHub
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/sodikinnaa/smart-report-plugin/master/install.sh)
+```
+
+### Dari repository lokal
 ```bash
 bash install.sh
 ```
