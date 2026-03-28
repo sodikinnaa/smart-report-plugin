@@ -80,6 +80,8 @@ Jika folder itu sudah ada dari install lama/manual, **backup lalu hapus dulu** s
 bash <(curl -fsSL https://raw.githubusercontent.com/sodikinnaa/smart-report-plugin/master/install.sh)
 ```
 
+Installer akan mencoba backup install lama **hanya** jika kegagalan terdeteksi karena bentrok direktori plugin yang sudah ada.
+
 ### 4. Auth token setelah install sukses
 
 ```bash
@@ -149,6 +151,11 @@ Alasan larangan ini:
 ## SOP Recovery Jika Update Gagal
 
 Jika installer gagal, **jangan langsung copy manual plugin**.
+
+Installer resmi kini hanya akan melakukan recovery terbatas untuk kasus spesifik:
+- folder plugin lama sudah ada di lokasi target
+- installer membackup folder lama itu
+- lalu retry install resmi satu kali
 
 Lakukan urutan ini:
 

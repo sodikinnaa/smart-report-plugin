@@ -102,6 +102,24 @@ cleanup() {
   fi
 }
 
+backup_existing_plugin() {
+  local existing_dir="$1"
+  local backup_root backup_dir
+
+  backup_root="${HOME}/.openclaw/extensions-backup/${PLUGIN_ID}"
+  mkdir -p "$backup_root"
+  backup_dir="${backup_root}/$(date +%Y%m%d-%H%M%S)"
+
+  mv "$existing_dir" "$backup_dir"
+  success "Backup plugin lama -> ${backup_dir}"
+}
+
+should_retry_after_existing_plugin_error() {
+  local log_file="$1"
+
+  grep -Fq "plugin already exists: ${TARGET_DIR}" "$log_file"
+}
+
 validate_repo() {
   local repo_dir="$1"
 
@@ -154,7 +172,40 @@ main() {
     else
       warn "openclaw plugins install dari repository gagal"
       sed -n '1,120p' "$INSTALL_LOG" || true
-      cat <<EOF
+
+      if should_retry_after_existing_plugin_error "$INSTALL_LOG"; then
+        warn "Ditemukan plugin lama di ${TARGET_DIR}; mencoba backup lalu retry sekali"
+
+        if [[ -d "$TARGET_DIR" ]]; then
+          backup_existing_plugin "$TARGET_DIR"
+        else
+          warn "Log menyebut plugin sudah ada, tetapi direktori target tidak ditemukan saat retry"
+        fi
+
+        if openclaw plugins install "$TMP_DIR/repo" >"$INSTALL_LOG" 2>&1; then
+          success "Plugin installed from repository after cleaning previous install"
+        else
+          warn "Retry install masih gagal"
+          sed -n '1,120p' "$INSTALL_LOG" || true
+          cat <<EOF
+
+❌ Install gagal walau plugin lama sudah dibackup.
+
+Fokus cek berikut:
+  1) plugins.allow / trust policy
+  2) install records / provenance
+  3) config utama OpenClaw bila ada anomaly di openclaw.json
+  4) warning keamanan / policy dari OpenClaw untuk plugin ini
+
+Diagnostik cepat:
+  - openclaw plugins list --verbose
+  - openclaw plugins doctor
+  - lihat log install di: $INSTALL_LOG
+EOF
+          exit 1
+        fi
+      else
+        cat <<EOF
 
 ❌ Install dihentikan untuk menghindari manual fallback yang membuat plugin jadi
    untracked local code.
@@ -173,7 +224,8 @@ Catatan:
   Script ini sengaja tidak lagi menyalin plugin langsung ke ${TARGET_DIR},
   karena jalur itu memicu warning provenance dan bisa bikin state config makin rancu.
 EOF
-      exit 1
+        exit 1
+      fi
     fi
   else
     fatal "openclaw command tidak ditemukan. Installer ini hanya mendukung install via OpenClaw plugin manager dari repository source."
