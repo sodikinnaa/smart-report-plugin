@@ -6,6 +6,7 @@ Plugin integrasi OpenClaw untuk menghubungkan agent dengan ekosistem **Smart Rep
 
 Plugin ini menyediakan:
 - **CLI command** untuk autentikasi dan health check
+- **Smart chat/native commands** untuk fungsi utama Smart Report
 - **Resources** untuk data dashboard, karyawan, divisi, guides, dan laporan
 - **Agent tools** untuk analisis dan query Smart Report
 - **Plugin skill** untuk memandu formatting output agar tidak menampilkan JSON mentah ke user
@@ -53,7 +54,8 @@ openclaw plugins install /path/ke/repo/smart-report-plugin
 
 Catatan penting:
 - installer tidak lagi fallback ke copy manual ke `~/.openclaw/extensions`
-- jika `openclaw plugins install` gagal, proses akan dihentikan agar tidak membuat plugin menjadi **untracked local code**
+- jika kegagalan terjadi karena folder plugin lama sudah ada, installer akan backup folder lama lalu retry install resmi satu kali
+- jika `openclaw plugins install` gagal karena alasan lain, proses akan dihentikan agar tidak membuat plugin menjadi **untracked local code**
 - rapikan trust/provenance OpenClaw terlebih dahulu, lalu ulangi install
 
 ## Konfigurasi
@@ -76,6 +78,17 @@ Untuk mengecek konektivitas backend dan method inti:
 ```bash
 openclaw smart-status
 ```
+
+Jika runtime OpenClaw mendukung native command di chat, command berikut juga tersedia:
+
+- `/smart-status`
+- `/smart-dashboard`
+- `/smart-employees`
+- `/smart-reports`
+- `/smart-divisions`
+- `/smart-guides`
+- `/smart-guide`
+- `/smart-analysis`
 
 ## Tools yang didaftarkan
 

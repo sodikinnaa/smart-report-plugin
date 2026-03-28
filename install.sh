@@ -249,6 +249,9 @@ Langkah verifikasi:
   2) Pastikan plugin terdeteksi dari hasil install repository/source
   3) openclaw smart-auth <TOKEN_SMART_REPORT>
   4) openclaw smart-status
+  5) Jika runtime mendukung native command chat, uji:
+     /smart-status
+     /smart-dashboard
 
 Jika masih error:
   - Jalankan: openclaw plugins doctor
