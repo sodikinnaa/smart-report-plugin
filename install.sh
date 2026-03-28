@@ -16,6 +16,7 @@ SKIP_BUILD="0"
 NO_RESTART="0"
 GITHUB_TOKEN="${GITHUB_TOKEN:-}"
 TMP_DIR=""
+INSTALL_LOG=""
 
 info()    { echo "  $*"; }
 success() { echo "✅ $*"; }
@@ -29,7 +30,7 @@ Usage: install.sh [options]
 Options:
   --repo <url>       Git repo URL sumber plugin (default: ${REPO_URL})
   --branch <name>    Branch/tag repo yang di-clone (default: ${BRANCH})
-  --target <path>    Target plugin dir untuk fallback manual (default: ${TARGET_DIR})
+  --target <path>    Reserved for diagnostics only (default: ${TARGET_DIR})
   --token <token>    GitHub token untuk private repo (atau GITHUB_TOKEN env)
   --skip-build       Skip npm install/build step
   --no-restart       Skip openclaw gateway restart
@@ -114,32 +115,6 @@ validate_repo() {
   fi
 }
 
-manual_install() {
-  local repo_dir="$1"
-
-  warn "Fallback ke manual install ke ${TARGET_DIR}"
-
-  mkdir -p "$(dirname "$TARGET_DIR")"
-  rm -rf "$TARGET_DIR"
-  mkdir -p "$TARGET_DIR"
-
-  cp -R \
-    "$repo_dir/openclaw.plugin.json" \
-    "$repo_dir/package.json" \
-    "$repo_dir/index.js" \
-    "$repo_dir/dist" \
-    "$repo_dir/skills" \
-    "$repo_dir/README.md" \
-    "$TARGET_DIR/"
-
-  if [[ -f "$repo_dir/package-lock.json" ]]; then
-    cp "$repo_dir/package-lock.json" "$TARGET_DIR/"
-  fi
-
-  (cd "$TARGET_DIR" && npm install --omit=dev >/dev/null 2>&1) || warn "npm install dependency plugin gagal"
-  success "Plugin terpasang secara manual di: ${TARGET_DIR}"
-}
-
 main() {
   parse_args "$@"
 
@@ -148,6 +123,7 @@ main() {
   need_cmd npm
 
   TMP_DIR="$(mktemp -d /tmp/smart-report-plugin-install-XXXXXX)"
+  INSTALL_LOG="$TMP_DIR/openclaw-install.log"
   trap cleanup EXIT
 
   local clone_url
@@ -173,16 +149,34 @@ main() {
   if command -v openclaw >/dev/null 2>&1; then
     info "Installing from repository via OpenClaw plugin manager..."
 
-    if openclaw plugins install "$TMP_DIR/repo" >/tmp/${PLUGIN_ID}-install.log 2>&1; then
+    if openclaw plugins install "$TMP_DIR/repo" >"$INSTALL_LOG" 2>&1; then
       success "Plugin installed from repository via openclaw plugins install"
     else
-      warn "openclaw plugins install dari repository gagal, mencoba fallback manual"
-      sed -n '1,80p' /tmp/${PLUGIN_ID}-install.log || true
-      manual_install "$TMP_DIR/repo"
+      warn "openclaw plugins install dari repository gagal"
+      sed -n '1,120p' "$INSTALL_LOG" || true
+      cat <<EOF
+
+❌ Install dihentikan untuk menghindari manual fallback yang membuat plugin jadi
+   untracked local code.
+
+Perbaiki dulu environment OpenClaw, lalu ulangi install. Fokus cek:
+  1) plugins.allow / trust policy
+  2) install records / provenance
+  3) config utama OpenClaw bila ada anomaly di openclaw.json
+
+Diagnostik cepat:
+  - openclaw plugins list --verbose
+  - openclaw plugins doctor
+  - lihat log install di: $INSTALL_LOG
+
+Catatan:
+  Script ini sengaja tidak lagi menyalin plugin langsung ke ${TARGET_DIR},
+  karena jalur itu memicu warning provenance dan bisa bikin state config makin rancu.
+EOF
+      exit 1
     fi
   else
-    warn "openclaw command tidak ditemukan, menggunakan manual install dari hasil clone repository"
-    manual_install "$TMP_DIR/repo"
+    fatal "openclaw command tidak ditemukan. Installer ini hanya mendukung install via OpenClaw plugin manager dari repository source."
   fi
 
   if command -v openclaw >/dev/null 2>&1; then

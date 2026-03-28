@@ -51,6 +51,11 @@ Atau install langsung dari source repository:
 openclaw plugins install /path/ke/repo/smart-report-plugin
 ```
 
+Catatan penting:
+- installer tidak lagi fallback ke copy manual ke `~/.openclaw/extensions`
+- jika `openclaw plugins install` gagal, proses akan dihentikan agar tidak membuat plugin menjadi **untracked local code**
+- rapikan trust/provenance OpenClaw terlebih dahulu, lalu ulangi install
+
 ## Konfigurasi
 
 Plugin menyimpan konfigurasi berikut setelah autentikasi berhasil:
