@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# install.sh — Safe installer for Smart Report Plugin (OpenClaw)
+# install.sh — Repo-only installer for Smart Report Plugin (OpenClaw)
 # Usage:
 #   bash install.sh
 #   bash install.sh --branch main
@@ -27,10 +27,10 @@ usage() {
 Usage: install.sh [options]
 
 Options:
-  --repo <url>       Git repo URL (default: ${REPO_URL})
-  --branch <name>    Branch/tag to install (default: ${BRANCH})
-  --target <path>    Target plugin dir (default: ${TARGET_DIR})
-  --token <token>    GitHub token for private repo (or set GITHUB_TOKEN env)
+  --repo <url>       Git repo URL sumber plugin (default: ${REPO_URL})
+  --branch <name>    Branch/tag repo yang di-clone (default: ${BRANCH})
+  --target <path>    Target plugin dir untuk fallback manual (default: ${TARGET_DIR})
+  --token <token>    GitHub token untuk private repo (atau GITHUB_TOKEN env)
   --skip-build       Skip npm install/build step
   --no-restart       Skip openclaw gateway restart
   -h, --help         Show this help
@@ -39,6 +39,10 @@ Examples:
   bash install.sh
   bash install.sh --branch main
   bash install.sh --repo https://github.com/sodikinnaa/smart-report-plugin.git
+
+Catatan:
+  Script ini hanya bekerja dari repository/source code.
+  Tidak publish ke npmjs dan tidak install dari package npm.
 EOF
 }
 
@@ -167,17 +171,17 @@ main() {
   validate_repo "$TMP_DIR/repo"
 
   if command -v openclaw >/dev/null 2>&1; then
-    info "Installing via OpenClaw plugin manager..."
+    info "Installing from repository via OpenClaw plugin manager..."
 
     if openclaw plugins install "$TMP_DIR/repo" >/tmp/${PLUGIN_ID}-install.log 2>&1; then
-      success "Plugin installed via openclaw plugins install"
+      success "Plugin installed from repository via openclaw plugins install"
     else
-      warn "openclaw plugins install gagal, mencoba fallback manual"
+      warn "openclaw plugins install dari repository gagal, mencoba fallback manual"
       sed -n '1,80p' /tmp/${PLUGIN_ID}-install.log || true
       manual_install "$TMP_DIR/repo"
     fi
   else
-    warn "openclaw command tidak ditemukan, menggunakan manual install"
+    warn "openclaw command tidak ditemukan, menggunakan manual install dari hasil clone repository"
     manual_install "$TMP_DIR/repo"
   fi
 
@@ -196,8 +200,9 @@ main() {
 
 Langkah verifikasi:
   1) openclaw plugins list --verbose
-  2) openclaw smart-auth <TOKEN_SMART_REPORT>
-  3) openclaw smart-status
+  2) Pastikan plugin terdeteksi dari hasil install repository/source
+  3) openclaw smart-auth <TOKEN_SMART_REPORT>
+  4) openclaw smart-status
 
 Jika masih error:
   - Jalankan: openclaw plugins doctor
