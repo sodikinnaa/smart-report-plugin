@@ -192,6 +192,11 @@ function formatReportsText(data: unknown): string {
   const lines = [`📝 Daftar Report (${items.length})`];
   for (const report of items.slice(0, 20)) {
     const item = asObject(report);
+    const reportId = formatValue(pickFirst(item, ['id', 'report_id']));
+    const divisionId = formatValue(pickFirst(item, ['division_id', 'divisionId']));
+    const userId = formatValue(pickFirst(item, ['user_id', 'userId', 'employee_id', 'employeeId']));
+    const companyId = formatValue(pickFirst(item, ['company_id', 'companyId']));
+
     const title = formatValue(pickFirst(item, [
       'title',
       'name',
@@ -231,21 +236,24 @@ function formatReportsText(data: unknown): string {
       'progress_status',
     ]));
 
-    const meta: string[] = [];
-    if (employee !== '-') meta.push(employee);
-    if (status !== '-') meta.push(`status: ${status}`);
+    const label = title !== '-'
+      ? title
+      : reportId !== '-'
+        ? `Report #${reportId}`
+        : 'Report';
 
-    if (title !== '-') {
-      lines.push(`- ${date} | ${title}${meta.length ? ` | ${meta.join(' | ')}` : ''}`);
-      continue;
+    const meta: string[] = [];
+    if (employee !== '-') {
+      meta.push(employee);
+    } else if (userId !== '-') {
+      meta.push(`User #${userId}`);
     }
 
-    const compactPairs = Object.entries(item)
-      .filter(([, value]) => value !== null && value !== undefined && String(value).trim() !== '')
-      .slice(0, 4)
-      .map(([key, value]) => `${key}: ${formatValue(value)}`);
+    if (divisionId !== '-') meta.push(`Divisi #${divisionId}`);
+    if (companyId !== '-') meta.push(`Company #${companyId}`);
+    if (status !== '-') meta.push(`Status: ${status}`);
 
-    lines.push(`- ${date}${compactPairs.length ? ` | ${compactPairs.join(' | ')}` : ''}`);
+    lines.push(`- ${date} | ${label}${meta.length ? ` | ${meta.join(' | ')}` : ''}`);
   }
 
   if (items.length > 20) {
