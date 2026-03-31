@@ -175,8 +175,8 @@ function formatReportsText(data) {
     if (items.length === 0) {
         return renderJsonFallback('📝 Smart Report Reports', data);
     }
-    const lines = [`📝 Daftar Report (${items.length})`];
-    for (const report of items.slice(0, 20)) {
+    const lines = [`📝 Daftar Report (${items.length})`, ''];
+    for (const report of items.slice(0, 10)) {
         const item = asObject(report);
         const user = asObject(item.user);
         const structuredData = asObject(item.structured_data);
@@ -209,29 +209,33 @@ function formatReportsText(data) {
             return taskStatus !== '-' ? `${taskName} [${taskStatus}]` : taskName;
         })
             .filter((text) => text !== '-');
-        const summaryParts = [];
-        if (employee !== '-')
-            summaryParts.push(employee);
+        const label = reportId !== '-' ? `#${reportId}` : '#-';
+        const primaryLineParts = [];
+        primaryLineParts.push(`${label} — ${employee !== '-' ? employee : 'Tanpa nama'}`);
         if (reportDate !== '-')
-            summaryParts.push(`tanggal report ${reportDate}`);
+            primaryLineParts.push(`📅 ${reportDate}`);
         else if (createdAt !== '-')
-            summaryParts.push(`dibuat ${createdAt}`);
+            primaryLineParts.push(`🕒 ${createdAt}`);
         if (divisionId !== '-')
-            summaryParts.push(`Divisi #${divisionId}`);
+            primaryLineParts.push(`🏢 Divisi #${divisionId}`);
+        lines.push(primaryLineParts.join(' • '));
+        const detailParts = [];
         if (keterangan !== '-')
-            summaryParts.push(`Keterangan: ${keterangan}`);
+            detailParts.push(`Keterangan: ${keterangan}`);
         if (taskCount > 0)
-            summaryParts.push(`${taskCount} task`);
-        const label = reportId !== '-' ? `Report #${reportId}` : 'Report';
-        lines.push(`- ${label}${summaryParts.length ? ` — ${summaryParts.join(' • ')}` : ''}`);
-        if (taskPreview.length > 0) {
-            lines.push(`  Tugas: ${taskPreview.join(' | ')}`);
+            detailParts.push(`Total task: ${taskCount}`);
+        if (detailParts.length > 0) {
+            lines.push(detailParts.join(' • '));
         }
+        if (taskPreview.length > 0) {
+            lines.push(`Tugas utama: ${taskPreview.join(' | ')}`);
+        }
+        lines.push('');
     }
-    if (items.length > 20) {
-        lines.push(`- ... dan ${items.length - 20} report lainnya`);
+    if (items.length > 10) {
+        lines.push(`... dan ${items.length - 10} report lainnya`);
     }
-    return lines.join('\n');
+    return lines.join('\n').trim();
 }
 function formatDivisionsText(data) {
     const items = asArray(data);
