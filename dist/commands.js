@@ -357,6 +357,10 @@ function registerChatCommands(api) {
         const data = await (0, client_1.callMcp)(api, 'reports/list', Object.keys(args || {}).length > 0 ? (args || {}) : { per_page: 10 });
         return formatReportsText(data);
     });
+    registerSmartCommand('smart_reports_raw', 'Show raw JSON report list from Smart Report for debugging.', async (args) => {
+        const data = await (0, client_1.callMcp)(api, 'reports/list', Object.keys(args || {}).length > 0 ? (args || {}) : { per_page: 10 });
+        return renderJsonFallback('🧪 Smart Report Reports Raw JSON', data);
+    });
     registerSmartCommand('smart_divisions', 'Show divisions from Smart Report.', async (args) => {
         const data = await (0, client_1.callMcp)(api, 'divisions/list', args || {});
         return formatDivisionsText(data);
