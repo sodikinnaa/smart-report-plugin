@@ -258,8 +258,9 @@ Langkah verifikasi:
   3) openclaw smart-auth <TOKEN_SMART_REPORT>
   4) openclaw smart-status
   5) Jika runtime mendukung native command chat, uji:
-     /smart-status
-     /smart-dashboard
+     /smart_status
+     /smart_dashboard {"mode":"compact"}
+     /smart_reports {"per_page":5}
 
 Jika masih error:
   - Jalankan: openclaw plugins doctor
