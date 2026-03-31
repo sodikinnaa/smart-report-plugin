@@ -86,14 +86,14 @@ openclaw smart-status
 
 Jika runtime OpenClaw mendukung native command di chat, command berikut juga tersedia:
 
-- `/smart-status`
-- `/smart-dashboard`
-- `/smart-employees`
-- `/smart-reports`
-- `/smart-divisions`
-- `/smart-guides`
-- `/smart-guide`
-- `/smart-analysis`
+- `/smart_status`
+- `/smart_dashboard`
+- `/smart_employees`
+- `/smart_reports`
+- `/smart_divisions`
+- `/smart_guides`
+- `/smart_guide`
+- `/smart_analysis`
 
 ## Tools yang didaftarkan
 

@@ -112,42 +112,42 @@ function registerChatCommands(api: CommandApi) {
     });
   };
 
-  registerSmartCommand('smart-status', 'Check Smart Report connectivity and core MCP functions.', async () => {
+  registerSmartCommand('smart_status', 'Check Smart Report connectivity and core MCP functions.', async () => {
     const checks = await collectStatusChecks(api);
     return renderStatusSummary(checks);
   });
 
-  registerSmartCommand('smart-dashboard', 'Show Smart Report daily dashboard summary.', async (args) => {
+  registerSmartCommand('smart_dashboard', 'Show Smart Report daily dashboard summary.', async (args) => {
     const data = await callMcp(api, 'smartreport/dashboard', Object.keys(args || {}).length > 0 ? (args || {}) : { mode: 'compact' });
     return renderJsonText('📊 Smart Report Dashboard', data);
   });
 
-  registerSmartCommand('smart-employees', 'Show employee list from Smart Report.', async (args) => {
+  registerSmartCommand('smart_employees', 'Show employee list from Smart Report.', async (args) => {
     const data = await callMcp(api, 'employees/list', args || {});
     return renderJsonText('👥 Smart Report Employees', data);
   });
 
-  registerSmartCommand('smart-reports', 'Show report list from Smart Report.', async (args) => {
+  registerSmartCommand('smart_reports', 'Show report list from Smart Report.', async (args) => {
     const data = await callMcp(api, 'reports/list', Object.keys(args || {}).length > 0 ? (args || {}) : { per_page: 10 });
     return renderJsonText('📝 Smart Report Reports', data);
   });
 
-  registerSmartCommand('smart-divisions', 'Show divisions from Smart Report.', async (args) => {
+  registerSmartCommand('smart_divisions', 'Show divisions from Smart Report.', async (args) => {
     const data = await callMcp(api, 'divisions/list', args || {});
     return renderJsonText('🏢 Smart Report Divisions', data);
   });
 
-  registerSmartCommand('smart-guides', 'Show available Smart Report guides.', async (args) => {
+  registerSmartCommand('smart_guides', 'Show available Smart Report guides.', async (args) => {
     const data = await callMcp(api, 'guides/list', args || {});
     return renderJsonText('📚 Smart Report Guides', data);
   });
 
-  registerSmartCommand('smart-guide', 'Show guide detail by ID from Smart Report.', async (args) => {
+  registerSmartCommand('smart_guide', 'Show guide detail by ID from Smart Report.', async (args) => {
     const data = await callMcp(api, 'guides/get', args || {});
     return renderJsonText('📖 Smart Report Guide Detail', data);
   });
 
-  registerSmartCommand('smart-analysis', 'Show performance/debt analysis from Smart Report.', async (args) => {
+  registerSmartCommand('smart_analysis', 'Show performance/debt analysis from Smart Report.', async (args) => {
     const data = await callMcp(api, 'analyze_performance', args || {});
     return renderJsonText('📈 Smart Report Performance Analysis', data);
   });
