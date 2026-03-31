@@ -7,7 +7,7 @@ Plugin OpenClaw untuk integrasi ke ekosistem **Smart Report** melalui:
 - **tools** untuk reasoning agent berbasis data Smart Report
 - **plugin skill** agar output ke user tetap rapi dan tidak menampilkan JSON mentah
 
-README ini sudah disesuaikan dengan **alur code terbaru** di source saat ini.
+README ini sudah disesuaikan dengan **alur code terbaru** di source saat ini, **termasuk perilaku `install.sh` terbaru**.
 
 ## Ringkasan alur terbaru
 
@@ -107,21 +107,36 @@ Tujuan alur ini adalah menjaga provenance/trust plugin tetap bersih dan menghind
 
 ## Opsi installer
 
+Contoh penggunaan:
+
 ```bash
+bash install.sh
 bash install.sh --branch main
 bash install.sh --repo https://github.com/sodikinnaa/smart-report-plugin.git
+bash install.sh --token <GITHUB_TOKEN>
 bash install.sh --skip-build
 bash install.sh --restart
 ```
 
 Opsi yang tersedia:
-- `--repo <url>`
-- `--branch <name>`
-- `--target <path>` *(diagnostik/reserved)*
-- `--token <token>`
-- `--skip-build`
-- `--restart`
-- `--no-restart`
+- `--repo <url>` → URL git source plugin
+- `--branch <name>` → branch/tag yang akan di-clone
+- `--target <path>` → reserved untuk diagnostik; bukan jalur manual install utama
+- `--token <token>` → GitHub token untuk private repo, atau gunakan env `GITHUB_TOKEN`
+- `--skip-build` → lewati `npm install` dan `npm run build`
+- `--restart` → restart `openclaw gateway` setelah install
+- `--no-restart` → alias legacy; restart tetap di-skip secara default
+
+## Batasan penting install.sh
+
+Perilaku script saat ini:
+- **wajib** ada command `git`, `node`, `npm`, dan `openclaw`
+- installer ini **hanya mendukung install via OpenClaw plugin manager**
+- script **tidak** publish ke npm dan **tidak** install dari package npm
+- jika `openclaw` tidak ditemukan, proses akan dihentikan
+- jika install via `openclaw plugins install` gagal karena alasan selain plugin lama sudah ada, script akan **stop** dan meminta environment OpenClaw diperbaiki dulu
+
+Artinya, `install.sh` memang sengaja dibuat konservatif supaya tidak menghasilkan plugin local yang untracked atau bermasalah secara provenance.
 
 ## Build & test
 
@@ -328,6 +343,8 @@ openclaw plugins list --verbose
 openclaw smart-auth <TOKEN_SMART_REPORT>
 openclaw smart-status
 ```
+
+Output akhir `install.sh` juga memang mengarahkan verifikasi ke alur ini, lalu menyarankan pengujian chat command bila runtime mendukung native command.
 
 Jika runtime mendukung chat/native command, lanjut uji:
 
