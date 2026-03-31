@@ -361,9 +361,17 @@ function registerChatCommands(api) {
         const data = await (0, client_1.callMcp)(api, 'smartreport/dashboard', Object.keys(args || {}).length > 0 ? (args || {}) : { mode: 'compact' });
         return formatDashboardText(data);
     });
+    registerSmartCommand('smart_dashboard_raw', 'Show raw JSON dashboard from Smart Report for debugging.', async (args) => {
+        const data = await (0, client_1.callMcp)(api, 'smartreport/dashboard', Object.keys(args || {}).length > 0 ? (args || {}) : { mode: 'compact' });
+        return renderJsonFallback('🧪 Smart Report Dashboard Raw JSON', data);
+    });
     registerSmartCommand('smart_employees', 'Show employee list from Smart Report.', async (args) => {
         const data = await (0, client_1.callMcp)(api, 'employees/list', args || {});
         return formatEmployeesText(data);
+    });
+    registerSmartCommand('smart_employees_raw', 'Show raw JSON employee list from Smart Report for debugging.', async (args) => {
+        const data = await (0, client_1.callMcp)(api, 'employees/list', args || {});
+        return renderJsonFallback('🧪 Smart Report Employees Raw JSON', data);
     });
     registerSmartCommand('smart_reports', 'Show report list from Smart Report.', async (args) => {
         const data = await (0, client_1.callMcp)(api, 'reports/list', Object.keys(args || {}).length > 0 ? (args || {}) : { per_page: 10 });
@@ -377,17 +385,33 @@ function registerChatCommands(api) {
         const data = await (0, client_1.callMcp)(api, 'divisions/list', args || {});
         return formatDivisionsText(data);
     });
+    registerSmartCommand('smart_divisions_raw', 'Show raw JSON divisions from Smart Report for debugging.', async (args) => {
+        const data = await (0, client_1.callMcp)(api, 'divisions/list', args || {});
+        return renderJsonFallback('🧪 Smart Report Divisions Raw JSON', data);
+    });
     registerSmartCommand('smart_guides', 'Show available Smart Report guides.', async (args) => {
         const data = await (0, client_1.callMcp)(api, 'guides/list', args || {});
         return formatGuidesText(data);
+    });
+    registerSmartCommand('smart_guides_raw', 'Show raw JSON guides list from Smart Report for debugging.', async (args) => {
+        const data = await (0, client_1.callMcp)(api, 'guides/list', args || {});
+        return renderJsonFallback('🧪 Smart Report Guides Raw JSON', data);
     });
     registerSmartCommand('smart_guide', 'Show guide detail by ID from Smart Report.', async (args) => {
         const data = await (0, client_1.callMcp)(api, 'guides/get', args || {});
         return formatGuideDetailText(data);
     });
+    registerSmartCommand('smart_guide_raw', 'Show raw JSON guide detail from Smart Report for debugging.', async (args) => {
+        const data = await (0, client_1.callMcp)(api, 'guides/get', args || {});
+        return renderJsonFallback('🧪 Smart Report Guide Detail Raw JSON', data);
+    });
     registerSmartCommand('smart_analysis', 'Show performance/debt analysis from Smart Report.', async (args) => {
         const data = await (0, client_1.callMcp)(api, 'analyze_performance', args || {});
         return formatAnalysisText(data);
+    });
+    registerSmartCommand('smart_analysis_raw', 'Show raw JSON performance/debt analysis from Smart Report for debugging.', async (args) => {
+        const data = await (0, client_1.callMcp)(api, 'analyze_performance', args || {});
+        return renderJsonFallback('🧪 Smart Report Analysis Raw JSON', data);
     });
 }
 function registerCommands(api) {

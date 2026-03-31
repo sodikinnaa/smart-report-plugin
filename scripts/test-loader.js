@@ -60,8 +60,8 @@ try {
     process.exit(1);
   }
 
-  if (registrations.commands !== 9) {
-    console.error(`❌ CI Gate Failed: expected 9 commands, got ${registrations.commands}`);
+  if (registrations.commands !== 15) {
+    console.error(`❌ CI Gate Failed: expected 15 commands, got ${registrations.commands}`);
     process.exit(1);
   }
 

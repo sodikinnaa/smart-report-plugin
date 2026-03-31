@@ -226,13 +226,19 @@ Jika runtime OpenClaw mendukung `registerCommand`, plugin akan mendaftarkan comm
 
 - `/smart_status`
 - `/smart_dashboard`
+- `/smart_dashboard_raw`
 - `/smart_employees`
+- `/smart_employees_raw`
 - `/smart_reports`
 - `/smart_reports_raw`
 - `/smart_divisions`
+- `/smart_divisions_raw`
 - `/smart_guides`
+- `/smart_guides_raw`
 - `/smart_guide`
+- `/smart_guide_raw`
 - `/smart_analysis`
+- `/smart_analysis_raw`
 
 ### Catatan penting nama command
 
