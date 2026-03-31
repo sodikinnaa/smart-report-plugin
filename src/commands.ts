@@ -192,11 +192,60 @@ function formatReportsText(data: unknown): string {
   const lines = [`📝 Daftar Report (${items.length})`];
   for (const report of items.slice(0, 20)) {
     const item = asObject(report);
-    const title = formatValue(pickFirst(item, ['title', 'name', 'subject']));
-    const date = formatValue(pickFirst(item, ['date', 'created_at', 'submitted_at']));
-    const employee = formatValue(pickFirst(item, ['employee', 'employee_name', 'user_name', 'author']));
-    const status = formatValue(pickFirst(item, ['status', 'state']));
-    lines.push(`- ${date} | ${title} | ${employee} | status: ${status}`);
+    const title = formatValue(pickFirst(item, [
+      'title',
+      'name',
+      'subject',
+      'report_name',
+      'report_title',
+      'activity',
+      'description',
+      'task',
+      'content',
+    ]));
+    const date = formatValue(pickFirst(item, [
+      'date',
+      'created_at',
+      'submitted_at',
+      'updated_at',
+      'report_date',
+      'submission_date',
+    ]));
+    const employee = formatValue(pickFirst(item, [
+      'employee',
+      'employee_name',
+      'user_name',
+      'author',
+      'name_user',
+      'fullname',
+      'full_name',
+      'staff_name',
+      'karyawan',
+      'employeeName',
+    ]));
+    const status = formatValue(pickFirst(item, [
+      'status',
+      'state',
+      'report_status',
+      'approval_status',
+      'progress_status',
+    ]));
+
+    const meta: string[] = [];
+    if (employee !== '-') meta.push(employee);
+    if (status !== '-') meta.push(`status: ${status}`);
+
+    if (title !== '-') {
+      lines.push(`- ${date} | ${title}${meta.length ? ` | ${meta.join(' | ')}` : ''}`);
+      continue;
+    }
+
+    const compactPairs = Object.entries(item)
+      .filter(([, value]) => value !== null && value !== undefined && String(value).trim() !== '')
+      .slice(0, 4)
+      .map(([key, value]) => `${key}: ${formatValue(value)}`);
+
+    lines.push(`- ${date}${compactPairs.length ? ` | ${compactPairs.join(' | ')}` : ''}`);
   }
 
   if (items.length > 20) {
