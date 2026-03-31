@@ -74,6 +74,30 @@ function formatValue(value) {
         return JSON.stringify(value);
     return String(value);
 }
+function formatIsoToDate(value) {
+    const text = formatValue(value);
+    if (text === '-')
+        return '-';
+    const match = text.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (!match)
+        return text;
+    return `${match[3]}-${match[2]}-${match[1]}`;
+}
+function normalizeStatus(value) {
+    const text = formatValue(value);
+    if (text === '-')
+        return '-';
+    const lower = text.trim().toLowerCase();
+    if (['done', 'selesai', 'completed', 'complete'].includes(lower))
+        return 'Done';
+    if (['progress', 'in progress', 'progres', 'ongoing'].includes(lower))
+        return 'Progress';
+    if (['planning', 'plan'].includes(lower))
+        return 'Planning';
+    if (['pending', 'wait'].includes(lower))
+        return 'Pending';
+    return text;
+}
 function formatDashboardText(data) {
     const root = asObject(data);
     const summary = asObject(pickFirst(root, ['summary', 'stats', 'data']) ?? root);
@@ -154,67 +178,55 @@ function formatReportsText(data) {
     const lines = [`📝 Daftar Report (${items.length})`];
     for (const report of items.slice(0, 20)) {
         const item = asObject(report);
+        const user = asObject(item.user);
+        const structuredData = asObject(item.structured_data);
+        const tasks = asArray(structuredData.tasks);
         const reportId = formatValue(pickFirst(item, ['id', 'report_id']));
         const divisionId = formatValue(pickFirst(item, ['division_id', 'divisionId']));
-        const userId = formatValue(pickFirst(item, ['user_id', 'userId', 'employee_id', 'employeeId']));
-        const companyId = formatValue(pickFirst(item, ['company_id', 'companyId']));
-        const title = formatValue(pickFirst(item, [
-            'title',
-            'name',
-            'subject',
-            'report_name',
-            'report_title',
-            'activity',
-            'description',
-            'task',
-            'content',
-        ]));
-        const date = formatValue(pickFirst(item, [
-            'date',
-            'created_at',
-            'submitted_at',
-            'updated_at',
-            'report_date',
-            'submission_date',
-        ]));
-        const employee = formatValue(pickFirst(item, [
-            'employee',
-            'employee_name',
-            'user_name',
-            'author',
-            'name_user',
-            'fullname',
-            'full_name',
-            'staff_name',
-            'karyawan',
-            'employeeName',
-        ]));
-        const status = formatValue(pickFirst(item, [
-            'status',
-            'state',
-            'report_status',
-            'approval_status',
-            'progress_status',
-        ]));
-        const label = title !== '-'
-            ? title
-            : reportId !== '-'
-                ? `Report #${reportId}`
-                : 'Report';
-        const meta = [];
-        if (employee !== '-') {
-            meta.push(employee);
-        }
-        else if (userId !== '-') {
-            meta.push(`User #${userId}`);
-        }
+        const employee = formatValue(pickFirst(user, ['name', 'full_name']) ??
+            pickFirst(item, [
+                'employee',
+                'employee_name',
+                'user_name',
+                'author',
+                'name_user',
+                'fullname',
+                'full_name',
+                'staff_name',
+                'karyawan',
+                'employeeName',
+            ]));
+        const reportDate = formatIsoToDate(pickFirst(item, ['report_date', 'date', 'submission_date']));
+        const createdAt = formatIsoToDate(pickFirst(item, ['created_at', 'submitted_at', 'updated_at']));
+        const keterangan = formatValue(pickFirst(structuredData, ['keterangan', 'note', 'notes']));
+        const taskCount = tasks.length;
+        const taskPreview = tasks
+            .slice(0, 2)
+            .map((task) => {
+            const taskItem = asObject(task);
+            const taskName = formatValue(pickFirst(taskItem, ['task', 'title', 'name']));
+            const taskStatus = normalizeStatus(pickFirst(taskItem, ['status', 'state']));
+            return taskStatus !== '-' ? `${taskName} [${taskStatus}]` : taskName;
+        })
+            .filter((text) => text !== '-');
+        const summaryParts = [];
+        if (employee !== '-')
+            summaryParts.push(employee);
+        if (reportDate !== '-')
+            summaryParts.push(`tanggal report ${reportDate}`);
+        else if (createdAt !== '-')
+            summaryParts.push(`dibuat ${createdAt}`);
         if (divisionId !== '-')
-            meta.push(`Divisi #${divisionId}`);
-        if (companyId !== '-')
-            meta.push(`Company #${companyId}`);
-        if (status !== '-')
-            meta.push(`Status: ${status}`);
-        lines.push(`- ${date} | ${label}${meta.length ? ` | ${meta.join(' | ')}` : ''}`);
+            summaryParts.push(`Divisi #${divisionId}`);
+        if (keterangan !== '-')
+            summaryParts.push(`Keterangan: ${keterangan}`);
+        if (taskCount > 0)
+            summaryParts.push(`${taskCount} task`);
+        const label = reportId !== '-' ? `Report #${reportId}` : 'Report';
+        lines.push(`- ${label}${summaryParts.length ? ` — ${summaryParts.join(' • ')}` : ''}`);
+        if (taskPreview.length > 0) {
+            lines.push(`  Tugas: ${taskPreview.join(' | ')}`);
+        }
     }
     if (items.length > 20) {
         lines.push(`- ... dan ${items.length - 20} report lainnya`);
