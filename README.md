@@ -363,6 +363,11 @@ Jika runtime mendukung chat/native command, lanjut uji:
 /smart_reports {"per_page":5}
 ```
 
+## Dokumentasi tambahan
+
+- `docs/USER_GUIDE.md`
+- `docs/AGENT_SESSION_MCP_TROUBLESHOOTING.md`
+
 ## Troubleshooting
 
 ### 1. Plugin gagal install
