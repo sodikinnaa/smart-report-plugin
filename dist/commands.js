@@ -34,8 +34,218 @@ function renderStatusSummary(checks) {
     lines.push(failed === 0 ? '✅ All MCP function checks passed.' : `⚠️ ${failed} check(s) failed.`);
     return lines.join('\n');
 }
-function renderJsonText(title, data) {
+function renderJsonFallback(title, data) {
     return `${title}\n\n${JSON.stringify(data, null, 2)}`;
+}
+function asArray(value) {
+    if (Array.isArray(value))
+        return value;
+    if (value && typeof value === 'object') {
+        const obj = value;
+        if (Array.isArray(obj.data))
+            return obj.data;
+        if (Array.isArray(obj.items))
+            return obj.items;
+        if (Array.isArray(obj.results))
+            return obj.results;
+    }
+    return [];
+}
+function asObject(value) {
+    return value && typeof value === 'object' && !Array.isArray(value)
+        ? value
+        : {};
+}
+function pickFirst(record, keys) {
+    for (const key of keys) {
+        const value = record[key];
+        if (value !== undefined && value !== null && String(value).trim() !== '') {
+            return value;
+        }
+    }
+    return undefined;
+}
+function formatValue(value) {
+    if (value === null || value === undefined)
+        return '-';
+    if (Array.isArray(value))
+        return value.length === 0 ? '-' : value.map((item) => formatValue(item)).join(', ');
+    if (typeof value === 'object')
+        return JSON.stringify(value);
+    return String(value);
+}
+function formatDashboardText(data) {
+    const root = asObject(data);
+    const summary = asObject(pickFirst(root, ['summary', 'stats', 'data']) ?? root);
+    const highlights = asArray(pickFirst(root, ['highlights', 'insights', 'messages']));
+    const alerts = asArray(pickFirst(root, ['alerts', 'warnings', 'issues']));
+    const divisions = asArray(pickFirst(root, ['divisions', 'division_stats', 'divisionStats']));
+    const company = formatValue(pickFirst(root, ['companyName', 'company', 'company_name', 'brand']));
+    const date = formatValue(pickFirst(root, ['date', 'today', 'generated_at', 'generatedAt']));
+    const mode = formatValue(pickFirst(root, ['mode']));
+    const totalEmployees = formatValue(pickFirst(summary, ['total_employees', 'totalEmployees', 'employee_count', 'employees']));
+    const submitted = formatValue(pickFirst(summary, ['submitted', 'submitted_reports', 'reported', 'done', 'completed']));
+    const pending = formatValue(pickFirst(summary, ['pending', 'not_submitted', 'remaining', 'unreported']));
+    const completion = formatValue(pickFirst(summary, ['completion_rate', 'completionRate', 'progress', 'percentage']));
+    const lines = ['📊 Smart Report Dashboard'];
+    lines.push(`Perusahaan: ${company}`);
+    if (date !== '-')
+        lines.push(`Tanggal: ${date}`);
+    if (mode !== '-')
+        lines.push(`Mode: ${mode}`);
+    lines.push('');
+    lines.push('Ringkasan:');
+    lines.push(`- Total karyawan: ${totalEmployees}`);
+    lines.push(`- Sudah lapor: ${submitted}`);
+    lines.push(`- Belum lapor: ${pending}`);
+    lines.push(`- Completion: ${completion}`);
+    if (divisions.length > 0) {
+        lines.push('');
+        lines.push('Per divisi:');
+        for (const division of divisions.slice(0, 10)) {
+            const item = asObject(division);
+            const name = formatValue(pickFirst(item, ['name', 'division', 'division_name']));
+            const count = formatValue(pickFirst(item, ['count', 'total', 'reports', 'submitted']));
+            lines.push(`- ${name}: ${count}`);
+        }
+    }
+    if (highlights.length > 0) {
+        lines.push('');
+        lines.push('Highlights:');
+        for (const item of highlights.slice(0, 5)) {
+            lines.push(`- ${formatValue(item)}`);
+        }
+    }
+    if (alerts.length > 0) {
+        lines.push('');
+        lines.push('Alerts:');
+        for (const item of alerts.slice(0, 5)) {
+            lines.push(`- ${formatValue(item)}`);
+        }
+    }
+    if (lines.length <= 6) {
+        return renderJsonFallback('📊 Smart Report Dashboard', data);
+    }
+    return lines.join('\n');
+}
+function formatEmployeesText(data) {
+    const items = asArray(data);
+    if (items.length === 0) {
+        return renderJsonFallback('👥 Smart Report Employees', data);
+    }
+    const lines = [`👥 Daftar Karyawan (${items.length})`];
+    for (const employee of items.slice(0, 30)) {
+        const item = asObject(employee);
+        const name = formatValue(pickFirst(item, ['name', 'full_name', 'employee_name']));
+        const division = formatValue(pickFirst(item, ['division', 'division_name', 'department']));
+        const email = formatValue(pickFirst(item, ['email', 'email_address']));
+        lines.push(`- ${name} — ${division}${email !== '-' ? ` (${email})` : ''}`);
+    }
+    if (items.length > 30) {
+        lines.push(`- ... dan ${items.length - 30} data lainnya`);
+    }
+    return lines.join('\n');
+}
+function formatReportsText(data) {
+    const items = asArray(data);
+    if (items.length === 0) {
+        return renderJsonFallback('📝 Smart Report Reports', data);
+    }
+    const lines = [`📝 Daftar Report (${items.length})`];
+    for (const report of items.slice(0, 20)) {
+        const item = asObject(report);
+        const title = formatValue(pickFirst(item, ['title', 'name', 'subject']));
+        const date = formatValue(pickFirst(item, ['date', 'created_at', 'submitted_at']));
+        const employee = formatValue(pickFirst(item, ['employee', 'employee_name', 'user_name', 'author']));
+        const status = formatValue(pickFirst(item, ['status', 'state']));
+        lines.push(`- ${date} | ${title} | ${employee} | status: ${status}`);
+    }
+    if (items.length > 20) {
+        lines.push(`- ... dan ${items.length - 20} report lainnya`);
+    }
+    return lines.join('\n');
+}
+function formatDivisionsText(data) {
+    const items = asArray(data);
+    if (items.length === 0) {
+        return renderJsonFallback('🏢 Smart Report Divisions', data);
+    }
+    const lines = [`🏢 Daftar Divisi (${items.length})`];
+    for (const division of items.slice(0, 30)) {
+        const item = asObject(division);
+        const name = formatValue(pickFirst(item, ['name', 'division_name']));
+        const count = formatValue(pickFirst(item, ['employee_count', 'total_employees', 'members']));
+        lines.push(`- ${name}${count !== '-' ? ` — ${count} anggota` : ''}`);
+    }
+    return lines.join('\n');
+}
+function formatGuidesText(data) {
+    const items = asArray(data);
+    if (items.length === 0) {
+        return renderJsonFallback('📚 Smart Report Guides', data);
+    }
+    const lines = [`📚 Daftar Guides (${items.length})`];
+    for (const guide of items.slice(0, 30)) {
+        const item = asObject(guide);
+        const id = formatValue(pickFirst(item, ['id', 'guide_id']));
+        const title = formatValue(pickFirst(item, ['title', 'name']));
+        const category = formatValue(pickFirst(item, ['category', 'group']));
+        lines.push(`- [${id}] ${title}${category !== '-' ? ` — ${category}` : ''}`);
+    }
+    return lines.join('\n');
+}
+function formatGuideDetailText(data) {
+    const item = asObject(data);
+    if (Object.keys(item).length === 0) {
+        return renderJsonFallback('📖 Smart Report Guide Detail', data);
+    }
+    const id = formatValue(pickFirst(item, ['id', 'guide_id']));
+    const title = formatValue(pickFirst(item, ['title', 'name']));
+    const category = formatValue(pickFirst(item, ['category', 'group']));
+    const content = formatValue(pickFirst(item, ['content', 'description', 'body', 'text']));
+    const lines = ['📖 Detail Guide'];
+    lines.push(`- ID: ${id}`);
+    lines.push(`- Judul: ${title}`);
+    if (category !== '-')
+        lines.push(`- Kategori: ${category}`);
+    lines.push('');
+    lines.push('Isi:');
+    lines.push(content);
+    return lines.join('\n');
+}
+function formatAnalysisText(data) {
+    const root = asObject(data);
+    const summary = asObject(pickFirst(root, ['summary', 'stats', 'overview']) ?? root);
+    const employees = asArray(pickFirst(root, ['employees', 'data', 'items']));
+    const debts = asArray(pickFirst(root, ['debts', 'pending', 'issues']));
+    const lines = ['📈 Analisis Performa Smart Report'];
+    if (Object.keys(summary).length > 0) {
+        lines.push('Ringkasan:');
+        for (const [key, value] of Object.entries(summary).slice(0, 8)) {
+            lines.push(`- ${key}: ${formatValue(value)}`);
+        }
+    }
+    if (employees.length > 0) {
+        lines.push('');
+        lines.push('Karyawan yang perlu perhatian:');
+        for (const employee of employees.slice(0, 10)) {
+            const item = asObject(employee);
+            const name = formatValue(pickFirst(item, ['name', 'employee_name', 'full_name']));
+            const note = formatValue(pickFirst(item, ['status', 'note', 'summary', 'debt', 'pending']));
+            lines.push(`- ${name}: ${note}`);
+        }
+    }
+    if (debts.length > 0) {
+        lines.push('');
+        lines.push('Temuan / utang kerja:');
+        for (const debt of debts.slice(0, 10)) {
+            lines.push(`- ${formatValue(debt)}`);
+        }
+    }
+    if (lines.length <= 1) {
+        return renderJsonFallback('📈 Smart Report Performance Analysis', data);
+    }
+    return lines.join('\n');
 }
 function normalizeCommandArgs(args) {
     const raw = (args ?? '').trim();
@@ -75,37 +285,37 @@ function registerChatCommands(api) {
             },
         });
     };
-    registerSmartCommand('smart-status', 'Check Smart Report connectivity and core MCP functions.', async () => {
+    registerSmartCommand('smart_status', 'Check Smart Report connectivity and core MCP functions.', async () => {
         const checks = await collectStatusChecks(api);
         return renderStatusSummary(checks);
     });
-    registerSmartCommand('smart-dashboard', 'Show Smart Report daily dashboard summary.', async (args) => {
+    registerSmartCommand('smart_dashboard', 'Show Smart Report daily dashboard summary.', async (args) => {
         const data = await (0, client_1.callMcp)(api, 'smartreport/dashboard', Object.keys(args || {}).length > 0 ? (args || {}) : { mode: 'compact' });
-        return renderJsonText('📊 Smart Report Dashboard', data);
+        return formatDashboardText(data);
     });
-    registerSmartCommand('smart-employees', 'Show employee list from Smart Report.', async (args) => {
+    registerSmartCommand('smart_employees', 'Show employee list from Smart Report.', async (args) => {
         const data = await (0, client_1.callMcp)(api, 'employees/list', args || {});
-        return renderJsonText('👥 Smart Report Employees', data);
+        return formatEmployeesText(data);
     });
-    registerSmartCommand('smart-reports', 'Show report list from Smart Report.', async (args) => {
+    registerSmartCommand('smart_reports', 'Show report list from Smart Report.', async (args) => {
         const data = await (0, client_1.callMcp)(api, 'reports/list', Object.keys(args || {}).length > 0 ? (args || {}) : { per_page: 10 });
-        return renderJsonText('📝 Smart Report Reports', data);
+        return formatReportsText(data);
     });
-    registerSmartCommand('smart-divisions', 'Show divisions from Smart Report.', async (args) => {
+    registerSmartCommand('smart_divisions', 'Show divisions from Smart Report.', async (args) => {
         const data = await (0, client_1.callMcp)(api, 'divisions/list', args || {});
-        return renderJsonText('🏢 Smart Report Divisions', data);
+        return formatDivisionsText(data);
     });
-    registerSmartCommand('smart-guides', 'Show available Smart Report guides.', async (args) => {
+    registerSmartCommand('smart_guides', 'Show available Smart Report guides.', async (args) => {
         const data = await (0, client_1.callMcp)(api, 'guides/list', args || {});
-        return renderJsonText('📚 Smart Report Guides', data);
+        return formatGuidesText(data);
     });
-    registerSmartCommand('smart-guide', 'Show guide detail by ID from Smart Report.', async (args) => {
+    registerSmartCommand('smart_guide', 'Show guide detail by ID from Smart Report.', async (args) => {
         const data = await (0, client_1.callMcp)(api, 'guides/get', args || {});
-        return renderJsonText('📖 Smart Report Guide Detail', data);
+        return formatGuideDetailText(data);
     });
-    registerSmartCommand('smart-analysis', 'Show performance/debt analysis from Smart Report.', async (args) => {
+    registerSmartCommand('smart_analysis', 'Show performance/debt analysis from Smart Report.', async (args) => {
         const data = await (0, client_1.callMcp)(api, 'analyze_performance', args || {});
-        return renderJsonText('📈 Smart Report Performance Analysis', data);
+        return formatAnalysisText(data);
     });
 }
 function registerCommands(api) {
