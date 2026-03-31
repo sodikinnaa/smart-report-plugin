@@ -14,6 +14,7 @@ BRANCH="master"
 TARGET_DIR="${HOME}/.openclaw/extensions/${PLUGIN_ID}"
 SKIP_BUILD="0"
 NO_RESTART="1"
+BACKUP_KEEP="3"
 GITHUB_TOKEN="${GITHUB_TOKEN:-}"
 TMP_DIR=""
 INSTALL_LOG=""
@@ -35,6 +36,7 @@ Options:
   --skip-build       Skip npm install/build step
   --restart          Restart openclaw gateway setelah install
   --no-restart       Alias legacy; restart tetap di-skip secara default
+  --keep-backups <n> Jumlah backup lama yang dipertahankan (default: ${BACKUP_KEEP})
   -h, --help         Show this help
 
 Examples:
@@ -42,6 +44,7 @@ Examples:
   bash install.sh --branch main
   bash install.sh --repo https://github.com/sodikinnaa/smart-report-plugin.git
   bash install.sh --restart
+  bash install.sh --keep-backups 3
 
 Catatan:
   Script ini hanya bekerja dari repository/source code.
@@ -70,6 +73,9 @@ parse_args() {
         NO_RESTART="0"; shift ;;
       --no-restart)
         NO_RESTART="1"; shift ;;
+      --keep-backups)
+        [[ $# -ge 2 ]] || fatal "Missing value for --keep-backups"
+        BACKUP_KEEP="$2"; shift 2 ;;
       -h|--help)
         usage; exit 0 ;;
       *)
@@ -106,6 +112,34 @@ cleanup() {
   fi
 }
 
+validate_backup_keep() {
+  [[ "$BACKUP_KEEP" =~ ^[0-9]+$ ]] || fatal "--keep-backups harus berupa angka >= 0"
+}
+
+prune_old_backups() {
+  local backup_root="$1"
+  local keep="$2"
+
+  [[ -d "$backup_root" ]] || return 0
+
+  mapfile -t backup_dirs < <(find "$backup_root" -mindepth 1 -maxdepth 1 -type d | sort -r)
+  local total="${#backup_dirs[@]}"
+
+  if (( total <= keep )); then
+    return 0
+  fi
+
+  local removed=0
+  for dir in "${backup_dirs[@]:keep}"; do
+    rm -rf "$dir"
+    removed=$((removed + 1))
+  done
+
+  if (( removed > 0 )); then
+    success "Cleanup backup lama: ${removed} folder dihapus, menyisakan ${keep} backup terbaru"
+  fi
+}
+
 backup_existing_plugin() {
   local existing_dir="$1"
   local backup_root backup_dir
@@ -116,6 +150,8 @@ backup_existing_plugin() {
 
   mv "$existing_dir" "$backup_dir"
   success "Backup plugin lama -> ${backup_dir}"
+
+  prune_old_backups "$backup_root" "$BACKUP_KEEP"
 }
 
 should_retry_after_existing_plugin_error() {
@@ -139,6 +175,7 @@ validate_repo() {
 
 main() {
   parse_args "$@"
+  validate_backup_keep
 
   need_cmd git
   need_cmd node
