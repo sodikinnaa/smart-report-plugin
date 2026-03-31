@@ -277,6 +277,8 @@ Plugin saat ini mendaftarkan tool berikut:
 - `get_guides_list`
 - `get_guide_content`
 - `get_list_reports`
+- `get_reports_summary`
+- `get_report_detail`
 - `get_debt_analysis`
 
 Semua tool memanggil backend MCP lalu mengembalikan hasil JSON dalam field `text`.

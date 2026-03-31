@@ -2,6 +2,18 @@
 
 Gunakan skill ini untuk berinteraksi dengan sistem Smart Report. AI diharapkan memformat respons secara profesional menggunakan elemen visual dashboard.
 
+## Aturan utama penggunaan tool
+
+Jika user meminta data Smart Report, **jangan menjawab dari asumsi atau chat history saja** bila data bisa diambil lewat tool. Ambil data terbaru melalui tool/plugin terlebih dahulu.
+
+Prioritas perilaku:
+1. Pilih tool Smart Report yang paling relevan.
+2. Ambil data terbaru dari tool.
+3. Ringkas hasilnya dalam bahasa yang rapi dan mudah dibaca user.
+4. **Jangan tampilkan JSON mentah** kecuali user memang minta debug/raw.
+
+Gunakan command/chat `_raw` hanya untuk debugging struktur response, bukan jawaban default ke user.
+
 ## Tools
 
 Gunakan tool berikut saat bekerja dengan Smart Report:

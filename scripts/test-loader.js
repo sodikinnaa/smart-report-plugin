@@ -55,8 +55,8 @@ try {
     process.exit(1);
   }
 
-  if (registrations.tools !== 5) {
-    console.error(`❌ CI Gate Failed: expected 5 tools, got ${registrations.tools}`);
+  if (registrations.tools !== 7) {
+    console.error(`❌ CI Gate Failed: expected 7 tools, got ${registrations.tools}`);
     process.exit(1);
   }
 
