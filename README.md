@@ -1,15 +1,27 @@
 # Smart Report Plugin for OpenClaw
 
-Plugin integrasi OpenClaw untuk menghubungkan agent dengan ekosistem **Smart Report** melalui command, resources, tools, dan skill plugin.
+Plugin OpenClaw untuk integrasi ke ekosistem **Smart Report** melalui:
+- **CLI commands** untuk autentikasi dan health check
+- **chat/native commands** untuk akses cepat dari runtime OpenClaw
+- **resources** untuk expose data Smart Report ke agent/runtime
+- **tools** untuk reasoning agent berbasis data Smart Report
+- **plugin skill** agar output ke user tetap rapi dan tidak menampilkan JSON mentah
 
-## Ringkasan kemampuan
+README ini sudah disesuaikan dengan **alur code terbaru** di source saat ini.
 
-Plugin ini menyediakan:
-- **CLI command** untuk autentikasi dan health check
-- **Smart chat/native commands** untuk fungsi utama Smart Report
-- **Resources** untuk data dashboard, karyawan, divisi, guides, dan laporan
-- **Agent tools** untuk analisis dan query Smart Report
-- **Plugin skill** untuk memandu formatting output agar tidak menampilkan JSON mentah ke user
+## Ringkasan alur terbaru
+
+Plugin melakukan registrasi pada saat `register(api)` / `activate(api)` dipanggil, lalu:
+
+1. mendaftarkan **CLI commands**
+2. mendaftarkan **chat commands** bila runtime mendukung `registerCommand`
+3. mendaftarkan **resources**
+4. mendaftarkan **tools**
+
+Struktur registrasi utama ada di `src/index.ts`:
+- `registerCommands(api)`
+- `registerResources(api)`
+- `registerTools(api)`
 
 ## Struktur plugin
 
@@ -17,7 +29,9 @@ Plugin ini menyediakan:
 smart-report-plugin/
 ├── package.json
 ├── openclaw.plugin.json
+├── openclaw.cjs
 ├── index.js
+├── install.sh
 ├── src/
 │   ├── client.ts
 │   ├── commands.ts
@@ -25,6 +39,12 @@ smart-report-plugin/
 │   ├── tools.ts
 │   └── index.ts
 ├── dist/
+│   ├── client.js
+│   ├── commands.js
+│   ├── resources.js
+│   ├── tools.js
+│   ├── index.js
+│   └── openclaw.cjs
 ├── skills/
 │   └── smart-report/
 │       └── SKILL.md
@@ -34,57 +54,160 @@ smart-report-plugin/
     └── test-loader.js
 ```
 
+## Requirement
+
+- OpenClaw terpasang dan bisa menjalankan `openclaw`
+- Node.js dan npm tersedia
+- Token API Smart Report valid
+- Runtime/plugin manager OpenClaw mengizinkan install plugin dari source repository
+
 ## Instalasi
 
-### Installer utama via raw GitHub
-```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/sodikinnaa/smart-report-plugin/master/install.sh)
-```
+### Opsi 1 — dari source repo lokal
 
-### Dari repository lokal
+Jika repo ini sudah ada di mesin:
+
 ```bash
 bash install.sh
 ```
 
-Atau install langsung dari source repository:
+### Opsi 2 — install via OpenClaw plugin manager dari path repo
 
 ```bash
-openclaw plugins install /path/ke/repo/smart-report-plugin
+openclaw plugins install /path/ke/smart-report-plugin
 ```
 
-Catatan penting:
-- installer tidak lagi fallback ke copy manual ke `~/.openclaw/extensions`
-- jika kegagalan terjadi karena folder plugin lama sudah ada, installer akan backup folder lama lalu retry install resmi satu kali
-- jika `openclaw plugins install` gagal karena alasan lain, proses akan dihentikan agar tidak membuat plugin menjadi **untracked local code**
-- rapikan trust/provenance OpenClaw terlebih dahulu, lalu ulangi install
+### Opsi 3 — installer via raw GitHub
 
-## Konfigurasi
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/sodikinnaa/smart-report-plugin/master/install.sh)
+```
 
-Plugin menyimpan konfigurasi berikut setelah autentikasi berhasil:
+## Alur installer terbaru
+
+`install.sh` sekarang mengikuti alur berikut:
+
+1. clone repository source
+2. menjalankan `npm ci` atau fallback `npm install`
+3. build plugin dengan `npm run build`
+4. validasi file penting plugin
+5. install plugin lewat **official OpenClaw plugin manager**:
+
+```bash
+openclaw plugins install <path-repo>
+```
+
+6. **tidak fallback** ke copy manual ke `~/.openclaw/extensions`
+7. bila gagal karena plugin lama sudah ada, installer akan:
+   - backup plugin lama
+   - retry install resmi **satu kali**
+8. gateway **tidak di-restart otomatis secara default**
+
+Tujuan alur ini adalah menjaga provenance/trust plugin tetap bersih dan menghindari state plugin local yang tidak ter-track.
+
+## Opsi installer
+
+```bash
+bash install.sh --branch main
+bash install.sh --repo https://github.com/sodikinnaa/smart-report-plugin.git
+bash install.sh --skip-build
+bash install.sh --restart
+```
+
+Opsi yang tersedia:
+- `--repo <url>`
+- `--branch <name>`
+- `--target <path>` *(diagnostik/reserved)*
+- `--token <token>`
+- `--skip-build`
+- `--restart`
+- `--no-restart`
+
+## Build & test
+
+```bash
+npm test
+npm run build
+```
+
+Script yang tersedia di `package.json`:
+- `npm run build`
+- `npm test`
+- `npm run publish`
+
+## Konfigurasi plugin
+
+Manifest `openclaw.plugin.json` mendeklarasikan config berikut:
+
 - `apiToken`
+- `companyName`
 - `companyDomain`
-- `companyName` *(optional)*
 
-Konfigurasi tidak perlu dipaksa ada saat proses install awal.
+Contoh shape config:
 
-Setelah instalasi, autentikasi token dengan:
+```json
+{
+  "apiToken": "TOKEN_SMART_REPORT",
+  "companyName": "Nama Perusahaan",
+  "companyDomain": "member.smartreport.my.id"
+}
+```
+
+## Cara autentikasi
+
+Setelah plugin ter-install, jalankan:
 
 ```bash
 openclaw smart-auth <TOKEN_ANDA>
 ```
 
-Catatan:
-- installer tidak me-restart gateway secara otomatis secara default agar channel aktif seperti Telegram tidak ikut terputus
-- jika memang perlu restart otomatis setelah install, gunakan `--restart`
-- `smart-auth` akan mencoba menyimpan token ke konfigurasi plugin OpenClaw agar bisa dipakai lintas proses CLI berikutnya
+Perilaku `smart-auth` di code terbaru:
+- token disimpan ke `api.pluginConfig` saat runtime berjalan
+- plugin mencoba verifikasi token dengan memanggil `company/info`
+- jika sukses, plugin menyimpan:
+  - `apiToken`
+  - `companyName`
+  - `companyDomain`
+- jika `api.saveConfig()` tersedia, plugin memakai mekanisme save resmi runtime
+- jika tidak tersedia, plugin fallback ke update file config OpenClaw yang ditemukan
 
-Untuk mengecek konektivitas backend dan method inti:
+Candidate config path yang dicoba oleh plugin:
+- `~/.openclaw/openclaw.json`
+- `~/.openclaw/config.json`
+- `/root/.openclaw/openclaw.json`
+- `/root/.openclaw/config.json`
+- `/etc/openclaw/openclaw.json`
+- `/etc/openclaw/config.json`
+
+## Cara cek konektivitas
+
+Untuk health check end-to-end, jalankan:
 
 ```bash
 openclaw smart-status
 ```
 
-Jika runtime OpenClaw mendukung native command di chat, command berikut juga tersedia:
+Status check saat ini menguji method berikut:
+- `company/info`
+- `smartreport/dashboard`
+- `employees/list`
+- `reports/list`
+- `divisions/list`
+- `guides/list`
+- `analyze_performance`
+
+Jika ada check gagal, command akan exit dengan status non-zero.
+
+## CLI commands yang tersedia
+
+Plugin saat ini mendaftarkan 2 CLI command:
+
+- `openclaw smart-auth <token>`
+- `openclaw smart-status`
+
+## Chat/native commands yang tersedia
+
+Jika runtime OpenClaw mendukung `registerCommand`, plugin akan mendaftarkan command berikut:
 
 - `/smart_status`
 - `/smart_dashboard`
@@ -95,7 +218,38 @@ Jika runtime OpenClaw mendukung native command di chat, command berikut juga ter
 - `/smart_guide`
 - `/smart_analysis`
 
+### Catatan penting nama command
+
+Di code terbaru, nama chat command memakai **underscore**, bukan dash.
+
+Benar:
+- `/smart_status`
+- `/smart_dashboard`
+
+Bukan:
+- `/smart-status`
+- `/smart-dashboard`
+
+## Format argumen command
+
+Command chat membaca `ctx.args` lalu mencoba parsing dengan alur berikut:
+
+1. jika kosong → `{}`
+2. jika valid JSON object → dipakai langsung
+3. jika valid JSON tapi bukan object → dibungkus sebagai `{ "input": ... }`
+4. jika bukan JSON → dibungkus sebagai `{ "input": "teks-raw" }`
+
+Contoh:
+
+```text
+/smart_reports {"per_page":5}
+/smart_guide {"id":12}
+/smart_dashboard {"mode":"compact"}
+```
+
 ## Tools yang didaftarkan
+
+Plugin saat ini mendaftarkan tool berikut:
 
 - `get_daily_dashboard`
 - `get_guides_list`
@@ -103,38 +257,153 @@ Jika runtime OpenClaw mendukung native command di chat, command berikut juga ter
 - `get_list_reports`
 - `get_debt_analysis`
 
-Catatan: tool mengembalikan JSON untuk reasoning internal agent. Output ke user sebaiknya diformat melalui skill `smart-report`.
+Semua tool memanggil backend MCP lalu mengembalikan hasil JSON dalam field `text`.
+
+Catatan:
+- tool memang ditujukan untuk **reasoning internal agent**
+- output ke user sebaiknya dirapikan terlebih dahulu
+- skill `smart-report` sebaiknya dipakai agar agent tidak menampilkan JSON mentah ke user
 
 ## Resources yang didaftarkan
 
-- `smartreport://dashboard`
-- `smartreport://employees`
+Plugin mendaftarkan resource berikut:
+
 - `smartreport://reports`
+- `smartreport://employees`
 - `smartreport://divisions`
 - `smartreport://guides`
+- `smartreport://dashboard`
 
-## Validasi minimum
+Semua resource saat ini mengembalikan `application/json`.
 
-Sebelum handoff/install, jalankan:
+## Method MCP yang dipakai plugin
 
-```bash
-npm test
-npm run build
-```
-
-## Kompatibilitas OpenClaw 2026.3.24+
-
-Untuk runtime OpenClaw 2026.3.24 dan sejenisnya, plugin command chat/native harus didaftarkan dengan field `handler` (bukan `execute`) dan sebaiknya menyetel `acceptsArgs: true` bila command menerima argumen. Versi plugin ini sudah menyesuaikan pola tersebut agar tidak memicu error startup seperti:
+Source `src/client.ts` saat ini memanggil endpoint:
 
 ```text
-[plugins] command registration failed: Command handler must be a function
+https://member.smartreport.my.id/api/mcp
 ```
 
-Jika command registration tetap gagal, plugin sekarang menangkap kegagalan registrasi command secara graceful agar tidak ikut menjatuhkan channel seperti Telegram saat startup gateway.
+Method MCP yang dipakai di berbagai command/resource/tool:
+- `company/info`
+- `smartreport/dashboard`
+- `employees/list`
+- `reports/list`
+- `divisions/list`
+- `guides/list`
+- `guides/get`
+- `analyze_performance`
+
+## Token resolution flow
+
+Saat melakukan request, plugin mencari token dengan urutan:
+
+1. `api.pluginConfig.apiToken`
+2. `api.config.apiToken`
+3. `api.config.plugins.entries.smart-report-plugin.config.apiToken`
+
+Jika token tidak ditemukan, plugin akan melempar error:
+
+```text
+API token not found. Jalankan "openclaw smart-auth <token>" terlebih dahulu.
+```
+
+## Kompatibilitas runtime OpenClaw terbaru
+
+Pada runtime OpenClaw yang lebih baru, command chat/native harus memakai field:
+- `handler`
+- bukan `execute`
+
+Plugin ini sudah mengikuti pola tersebut dan juga menyetel:
+- `acceptsArgs: true`
+
+Selain itu, proses registrasi chat command dibungkus `try/catch` agar kegagalan registrasi tidak ikut menjatuhkan startup plugin secara keseluruhan.
+
+## Verifikasi setelah install
+
+Langkah verifikasi yang direkomendasikan:
+
+```bash
+openclaw plugins list --verbose
+openclaw smart-auth <TOKEN_SMART_REPORT>
+openclaw smart-status
+```
+
+Jika runtime mendukung chat/native command, lanjut uji:
+
+```text
+/smart_status
+/smart_dashboard {"mode":"compact"}
+/smart_reports {"per_page":5}
+```
+
+## Troubleshooting
+
+### 1. Plugin gagal install
+
+Cek:
+
+```bash
+openclaw plugins list --verbose
+openclaw plugins doctor
+```
+
+Kemungkinan penyebab:
+- trust/provenance plugin belum valid
+- plugin lama masih tercatat
+- policy OpenClaw menolak install source tertentu
+
+### 2. Auth gagal
+
+Pastikan:
+- token valid
+- endpoint Smart Report bisa diakses
+- backend menerima Bearer token
+
+Ulangi:
+
+```bash
+openclaw smart-auth <TOKEN_ANDA>
+```
+
+### 3. Command chat tidak muncul
+
+Kemungkinan:
+- runtime tidak menyediakan `registerCommand`
+- channel/runtime tidak mendukung native command plugin
+- ada error registrasi command saat startup
+
+### 4. Tool mengembalikan error
+
+Cek apakah token sudah tersimpan dan method MCP yang dipanggil memang tersedia di backend.
+
+## Manifest & metadata saat ini
+
+`package.json`
+- package name: `@sodikinnaa/smart-report-plugin`
+- version: `2100.11.6`
+
+`openclaw.plugin.json`
+- plugin id: `smart-report-plugin`
+- name: `Smart Report Integration`
+- version: `2100.11.6`
+- entrypoint: `./index.js`
 
 ## Catatan desain
 
-- Struktur plugin sudah dipisah per responsibility: `commands`, `resources`, `tools`, `client`
-- Konfigurasi disimpan melalui runtime `saveConfig()` bila tersedia
-- Manifest memakai `configSchema` yang strict (`additionalProperties: false`)
-- Skill plugin dideklarasikan melalui folder `./skills`
+- registrasi dipisah per concern: `commands`, `resources`, `tools`, `client`
+- `client.ts` menangani auth, persistence config, dan call MCP
+- `commands.ts` menangani CLI + chat command
+- `resources.ts` expose dataset Smart Report sebagai resource JSON
+- `tools.ts` expose method penting untuk reasoning agent
+- skill plugin disediakan di folder `./skills`
+
+## Rekomendasi penggunaan
+
+Gunakan:
+- **CLI command** untuk setup awal dan health check
+- **chat command** untuk akses cepat/manual dari runtime
+- **tools** untuk analisis oleh agent
+- **skill** untuk merapikan output akhir ke user
+
+Kalau ingin menjaga UX tetap bagus, jangan tampilkan raw JSON ke end-user kecuali memang untuk debugging.
