@@ -5,6 +5,7 @@ on:
     branches: [master]
     paths:
       - "package.json"
+  workflow_dispatch:
 
 jobs:
   publish:
@@ -18,9 +19,13 @@ jobs:
 
       - name: Check if version changed
         id: version
+        shell: bash
         run: |
           NEW=$(node -p "require('./package.json').version")
           OLD=$(git show HEAD~1:package.json | node -p "JSON.parse(require('fs').readFileSync('/dev/stdin','utf8')).version")
+
+          echo "new=$NEW" >> "$GITHUB_OUTPUT"
+
           if [ "$NEW" != "$OLD" ]; then
             echo "changed=true" >> "$GITHUB_OUTPUT"
             echo "Version changed: $OLD -> $NEW"
@@ -35,10 +40,30 @@ jobs:
           node-version: "20"
           registry-url: "https://registry.npmjs.org"
 
-      - run: npm install
+      - name: Check if version already exists on npm
+        id: npm
         if: steps.version.outputs.changed == 'true'
+        shell: bash
+        run: |
+          PKG=$(node -p "require('./package.json').name")
+          VER="${{ steps.version.outputs.new }}"
+
+          if npm view "$PKG@$VER" version >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "Version already exists on npm: $PKG@$VER"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+            echo "Version not found on npm yet: $PKG@$VER"
+          fi
+
+      - run: npm install
+        if: steps.version.outputs.changed == 'true' && steps.npm.outputs.exists == 'false'
 
       - run: npm publish --access public
-        if: steps.version.outputs.changed == 'true'
+        if: steps.version.outputs.changed == 'true' && steps.npm.outputs.exists == 'false'
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Skip publish (already exists)
+        if: steps.version.outputs.changed == 'true' && steps.npm.outputs.exists == 'true'
+        run: echo "Skip publish: version already exists on npm"
