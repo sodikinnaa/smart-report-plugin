@@ -12,7 +12,8 @@
   "keywords": [
     "openclaw-plugin",
     "smart-report",
-    "dashboard"
+    "dashboard",
+    "npm-ci"
   ],
   "author": "Sodikin",
   "license": "MIT",
