@@ -1,6 +1,6 @@
 {
   "name": "@sodikinnaa/smart-report-plugin",
-  "version": "2100.11.7",
+  "version": "2100.11.8",
   "description": "OpenClaw plugin for Smart Report system integration with Daily Dashboard",
   "main": "./index.js",
   "types": "./dist/index.d.ts",
