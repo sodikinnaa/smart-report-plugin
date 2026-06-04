@@ -66,4 +66,4 @@ jobs:
 
       - name: Skip publish (already exists)
         if: steps.version.outputs.changed == 'true' && steps.npm.outputs.exists == 'true'
-        run: echo "Skip publish: version already exists on npm"
+        run: echo "Skip publish - version already exists on npm"
