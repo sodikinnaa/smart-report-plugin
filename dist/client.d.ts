@@ -1,5 +1,5 @@
 export declare const PLUGIN_ID = "smart-report-plugin";
-export declare const API_BASE = "https://member.smartreport.my.id/api/mcp";
+export declare const API_BASE = "https://karyawan.gemaritematik.id/api/mcp";
 export type SmartReportApi = {
     pluginConfig?: Record<string, unknown>;
     config?: any;

@@ -4,7 +4,7 @@ import os from 'os';
 import path from 'path';
 
 export const PLUGIN_ID = 'smart-report-plugin';
-export const API_BASE = 'https://member.smartreport.my.id/api/mcp';
+export const API_BASE = 'https://karyawan.gemaritematik.id/api/mcp';
 
 export type SmartReportApi = {
   pluginConfig?: Record<string, unknown>;

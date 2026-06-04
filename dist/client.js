@@ -13,7 +13,7 @@ const fs_1 = __importDefault(require("fs"));
 const os_1 = __importDefault(require("os"));
 const path_1 = __importDefault(require("path"));
 exports.PLUGIN_ID = 'smart-report-plugin';
-exports.API_BASE = 'https://member.smartreport.my.id/api/mcp';
+exports.API_BASE = 'https://karyawan.gemaritematik.id/api/mcp';
 function resolveToken(api) {
     const pluginToken = api?.pluginConfig?.apiToken;
     if (typeof pluginToken === 'string' && pluginToken.trim())
